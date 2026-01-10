@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Plus, X } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 const requestTypes = [
@@ -18,18 +18,6 @@ const requestTypes = [
   { id: "PLATFORM_DEV", label: "플랫폼 개발" },
   { id: "CRM_DEV", label: "CRM 개발" },
 ];
-
-const paymentTypes = [
-  { id: "ADVANCE", label: "선수금" },
-  { id: "MID_PAYMENT", label: "중도금" },
-  { id: "BALANCE", label: "잔금" },
-  { id: "FULL_PAYMENT", label: "전체지급" },
-];
-
-interface PaymentEntry {
-  type: string;
-  amount: string;
-}
 
 export default function NewClientPage() {
   const router = useRouter();
@@ -43,7 +31,6 @@ export default function NewClientPage() {
   const [requirements, setRequirements] = useState("");
   const [selectedRequestTypes, setSelectedRequestTypes] = useState<string[]>([]);
   const [customRequestType, setCustomRequestType] = useState("");
-  const [payments, setPayments] = useState<PaymentEntry[]>([]);
 
   const handleRequestTypeChange = (typeId: string, checked: boolean) => {
     if (checked) {
@@ -51,22 +38,6 @@ export default function NewClientPage() {
     } else {
       setSelectedRequestTypes(selectedRequestTypes.filter((t) => t !== typeId));
     }
-  };
-
-  const addPayment = (type: string) => {
-    if (!payments.find((p) => p.type === type)) {
-      setPayments([...payments, { type, amount: "" }]);
-    }
-  };
-
-  const updatePaymentAmount = (type: string, amount: string) => {
-    setPayments(
-      payments.map((p) => (p.type === type ? { ...p, amount } : p))
-    );
-  };
-
-  const removePayment = (type: string) => {
-    setPayments(payments.filter((p) => p.type !== type));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,13 +57,6 @@ export default function NewClientPage() {
         });
       }
 
-      const paymentsData = payments
-        .filter((p) => p.amount)
-        .map((p) => ({
-          type: p.type,
-          amount: parseFloat(p.amount.replace(/,/g, "")),
-        }));
-
       const response = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,7 +67,6 @@ export default function NewClientPage() {
           firstDraftDate: firstDraftDate || null,
           requirements,
           requestTypes: requestTypesData,
-          payments: paymentsData,
         }),
       });
 
@@ -228,54 +191,6 @@ export default function NewClientPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>매출</CardTitle>
-                <CardDescription>매출 유형별 금액을 입력하세요.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {paymentTypes.map((type) => (
-                    <Button
-                      key={type.id}
-                      type="button"
-                      variant={payments.find((p) => p.type === type.id) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => addPayment(type.id)}
-                      disabled={!!payments.find((p) => p.type === type.id)}
-                    >
-                      <Plus className="mr-1 h-3 w-3" />
-                      {type.label}
-                    </Button>
-                  ))}
-                </div>
-                <div className="space-y-3">
-                  {payments.map((payment) => (
-                    <div key={payment.type} className="flex items-center gap-2">
-                      <span className="w-20 text-sm font-medium">
-                        {paymentTypes.find((t) => t.id === payment.type)?.label}
-                      </span>
-                      <Input
-                        type="text"
-                        value={payment.amount}
-                        onChange={(e) => updatePaymentAmount(payment.type, e.target.value)}
-                        placeholder="금액 입력"
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-gray-500">원</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removePayment(payment.type)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 

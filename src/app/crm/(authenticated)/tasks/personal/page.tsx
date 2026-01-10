@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Calendar, AlertCircle, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Calendar, Loader2, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -43,13 +43,22 @@ export default function PersonalTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   // New task form
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("NORMAL");
   const [deadline, setDeadline] = useState("");
+
+  // Edit form
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editPriority, setEditPriority] = useState("NORMAL");
+  const [editDeadline, setEditDeadline] = useState("");
+  const [editStatus, setEditStatus] = useState("TODO");
 
   useEffect(() => {
     fetchTasks();
@@ -97,6 +106,62 @@ export default function PersonalTasksPage() {
       console.error("Error creating task:", error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setEditTitle(task.title);
+    setEditDescription(task.description || "");
+    setEditPriority(task.priority);
+    setEditDeadline(task.deadline ? task.deadline.split("T")[0] : "");
+    setEditStatus(task.status);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTask) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/tasks/${selectedTask.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle,
+          description: editDescription,
+          priority: editPriority,
+          deadline: editDeadline || null,
+          status: editStatus,
+        }),
+      });
+
+      if (res.ok) {
+        setIsEditDialogOpen(false);
+        setSelectedTask(null);
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm("이 업무를 삭제하시겠습니까?")) return;
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
     }
   };
 
@@ -235,7 +300,27 @@ export default function PersonalTasksPage() {
                   className="cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-4">
-                    <h4 className="font-medium mb-2">{task.title}</h4>
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium flex-1">{task.title}</h4>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => handleEditTask(task)}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-red-500"
+                          onClick={() => handleDeleteTask(task.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
                     {task.description && (
                       <p className="text-sm text-gray-500 mb-2 line-clamp-2">
                         {task.description}
@@ -258,7 +343,7 @@ export default function PersonalTasksPage() {
                       </p>
                     )}
                     {/* Status change buttons */}
-                    <div className="mt-3 flex gap-1">
+                    <div className="mt-3 flex gap-1 flex-wrap">
                       {statusColumns
                         .filter((s) => s.id !== task.status)
                         .map((s) => (
@@ -285,6 +370,97 @@ export default function PersonalTasksPage() {
           </div>
         ))}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>업무 수정</DialogTitle>
+            <DialogDescription>업무 정보를 수정합니다.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateTask} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="editTitle">제목 *</Label>
+              <Input
+                id="editTitle"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="업무 제목"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editDescription">설명</Label>
+              <Textarea
+                id="editDescription"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="업무 설명"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editPriority">긴급성</Label>
+                <Select value={editPriority} onValueChange={setEditPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">낮음</SelectItem>
+                    <SelectItem value="NORMAL">보통</SelectItem>
+                    <SelectItem value="HIGH">높음</SelectItem>
+                    <SelectItem value="URGENT">긴급</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editStatus">상태</Label>
+                <Select value={editStatus} onValueChange={setEditStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusColumns.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editDeadline">데드라인</Label>
+              <Input
+                id="editDeadline"
+                type="date"
+                value={editDeadline}
+                onChange={(e) => setEditDeadline(e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                취소
+              </Button>
+              <Button type="submit" disabled={isSubmitting || !editTitle}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  "저장"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Edit, Building2, Phone, Calendar, FileText, FolderKanban } from "lucide-react";
+import { DeleteButton } from "@/components/DeleteButton";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -16,13 +17,6 @@ const requestTypeLabels: Record<string, string> = {
   PLATFORM_DEV: "플랫폼 개발",
   CRM_DEV: "CRM 개발",
   OTHER: "기타",
-};
-
-const paymentTypeLabels: Record<string, string> = {
-  ADVANCE: "선수금",
-  MID_PAYMENT: "중도금",
-  BALANCE: "잔금",
-  FULL_PAYMENT: "전체지급",
 };
 
 const projectStatusLabels: Record<string, string> = {
@@ -40,12 +34,12 @@ async function getClient(id: string) {
     where: { id },
     include: {
       requestTypes: true,
-      payments: true,
       projects: {
         include: {
           manager: {
             select: { id: true, name: true },
           },
+          payments: true,
         },
         orderBy: { createdAt: "desc" },
       },
@@ -65,7 +59,10 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const totalPayments = client.payments.reduce((sum, p) => sum + p.amount, 0);
+  // Calculate total payments from all projects
+  const totalPayments = client.projects.reduce((sum, project) => {
+    return sum + project.payments.reduce((pSum, p) => pSum + p.amount, 0);
+  }, 0);
 
   return (
     <div className="space-y-6">
@@ -81,116 +78,94 @@ export default async function ClientDetailPage({
             <p className="text-gray-500">거래처 상세 정보</p>
           </div>
         </div>
-        <Button variant="outline">
-          <Edit className="mr-2 h-4 w-4" />
-          수정
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/crm/clients/${client.id}/edit`}>
+            <Button variant="outline">
+              <Edit className="mr-2 h-4 w-4" />
+              수정
+            </Button>
+          </Link>
+          <DeleteButton
+            id={client.id}
+            endpoint="/api/clients"
+            redirectPath="/crm/clients"
+            itemName={client.name}
+          />
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* 기본 정보 */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              기본 정보
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="text-sm font-medium text-gray-500">거래처명</p>
-                <p className="text-lg">{client.name}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">연락처</p>
-                <p className="text-lg flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  {client.contact || "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">계약날짜</p>
-                <p className="text-lg flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  {client.contractDate
-                    ? format(new Date(client.contractDate), "yyyy년 MM월 dd일", { locale: ko })
-                    : "-"}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">1차 시안 공유 일정</p>
-                <p className="text-lg">
-                  {client.firstDraftDate
-                    ? format(new Date(client.firstDraftDate), "yyyy년 MM월 dd일", { locale: ko })
-                    : "-"}
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
+      {/* 기본 정보 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            기본 정보
+          </CardTitle>
+          <CardDescription>
+            총 매출: {totalPayments.toLocaleString()}원 (프로젝트 합계)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-2">의뢰 유형</p>
-              <div className="flex flex-wrap gap-2">
-                {client.requestTypes.length > 0 ? (
-                  client.requestTypes.map((rt, idx) => (
-                    <Badge key={idx} variant="secondary">
-                      {rt.type === "OTHER"
-                        ? rt.customType || "기타"
-                        : requestTypeLabels[rt.type]}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-gray-400">-</span>
-                )}
-              </div>
+              <p className="text-sm font-medium text-gray-500">거래처명</p>
+              <p className="text-lg">{client.name}</p>
             </div>
-
-            <Separator />
-
             <div>
-              <p className="text-sm font-medium text-gray-500 mb-2">진행 요청사항</p>
-              <p className="whitespace-pre-wrap text-gray-700">
-                {client.requirements || "-"}
+              <p className="text-sm font-medium text-gray-500">연락처</p>
+              <p className="text-lg flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                {client.contact || "-"}
               </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* 매출 정보 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>매출 정보</CardTitle>
-            <CardDescription>
-              총 {totalPayments.toLocaleString()}원
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {client.payments.length > 0 ? (
-              <div className="space-y-3">
-                {client.payments.map((payment, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between py-2 border-b last:border-0"
-                  >
-                    <span className="text-sm font-medium">
-                      {paymentTypeLabels[payment.type]}
-                    </span>
-                    <span className="text-sm">
-                      {payment.amount.toLocaleString()}원
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-gray-400 py-4">
-                등록된 매출 정보가 없습니다.
+            <div>
+              <p className="text-sm font-medium text-gray-500">계약날짜</p>
+              <p className="text-lg flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                {client.contractDate
+                  ? format(new Date(client.contractDate), "yyyy년 MM월 dd일", { locale: ko })
+                  : "-"}
               </p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">1차 시안 공유 일정</p>
+              <p className="text-lg">
+                {client.firstDraftDate
+                  ? format(new Date(client.firstDraftDate), "yyyy년 MM월 dd일", { locale: ko })
+                  : "-"}
+              </p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-2">의뢰 유형</p>
+            <div className="flex flex-wrap gap-2">
+              {client.requestTypes.length > 0 ? (
+                client.requestTypes.map((rt, idx) => (
+                  <Badge key={idx} variant="secondary">
+                    {rt.type === "OTHER"
+                      ? rt.customType || "기타"
+                      : requestTypeLabels[rt.type]}
+                  </Badge>
+                ))
+              ) : (
+                <span className="text-gray-400">-</span>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div>
+            <p className="text-sm font-medium text-gray-500 mb-2">진행 요청사항</p>
+            <p className="whitespace-pre-wrap text-gray-700">
+              {client.requirements || "-"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 연동된 프로젝트 */}
       <Card>

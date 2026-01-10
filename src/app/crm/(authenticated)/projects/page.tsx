@@ -2,7 +2,7 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Plus, FolderKanban, Eye } from "lucide-react";
@@ -19,6 +19,10 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   COMPLETED: { label: "완료", color: "bg-emerald-100 text-emerald-800" },
 };
 
+function formatCurrency(amount: number) {
+  return new Intl.NumberFormat("ko-KR").format(amount) + "원";
+}
+
 async function getProjects() {
   return prisma.project.findMany({
     include: {
@@ -28,6 +32,7 @@ async function getProjects() {
       manager: {
         select: { id: true, name: true },
       },
+      payments: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -35,6 +40,15 @@ async function getProjects() {
 
 export default async function ProjectsPage() {
   const projects = await getProjects();
+
+  // Calculate total amount for each project from payments
+  const projectsWithTotals = projects.map((project) => {
+    const totalAmount = project.payments.reduce((sum, payment) => sum + payment.amount, 0);
+    return { ...project, totalAmount };
+  });
+
+  // Calculate grand total
+  const grandTotal = projectsWithTotals.reduce((sum, project) => sum + project.totalAmount, 0);
 
   return (
     <div className="space-y-6">
@@ -87,12 +101,13 @@ export default async function ProjectsPage() {
                   <TableHead>담당자</TableHead>
                   <TableHead>상태</TableHead>
                   <TableHead>진행률</TableHead>
+                  <TableHead className="text-right">금액</TableHead>
                   <TableHead>생성일</TableHead>
                   <TableHead className="text-right">액션</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {projects.map((project) => (
+                {projectsWithTotals.map((project) => (
                   <TableRow key={project.id}>
                     <TableCell className="font-medium">{project.name}</TableCell>
                     <TableCell>{project.client.name}</TableCell>
@@ -110,19 +125,32 @@ export default async function ProjectsPage() {
                         </span>
                       </div>
                     </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {project.totalAmount > 0 ? formatCurrency(project.totalAmount) : "-"}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(project.createdAt), "yyyy.MM.dd", { locale: ko })}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/crm/projects/${project.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
+                        <Button variant="outline" size="sm">
+                          <Eye className="mr-1 h-4 w-4" />
+                          자세히 보기
                         </Button>
                       </Link>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={5} className="font-bold">총 합계</TableCell>
+                  <TableCell className="text-right font-bold">
+                    {formatCurrency(grandTotal)}
+                  </TableCell>
+                  <TableCell colSpan={2}></TableCell>
+                </TableRow>
+              </TableFooter>
             </Table>
           )}
         </CardContent>

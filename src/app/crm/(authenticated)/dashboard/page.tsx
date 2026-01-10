@@ -14,16 +14,27 @@ async function getDashboardStats() {
   return { clientCount, projectCount, leadCount, taskCount };
 }
 
+function getGivenName(fullName: string | null | undefined): string {
+  if (!fullName) return "사용자";
+  // Korean names: first character is surname, rest is given name
+  // e.g., "신동훈" -> "동훈"
+  if (fullName.length > 1) {
+    return fullName.slice(1);
+  }
+  return fullName;
+}
+
 export default async function DashboardPage() {
   const session = await auth();
   const stats = await getDashboardStats();
+  const givenName = getGivenName(session?.user?.name);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
         <p className="text-gray-500">
-          안녕하세요, {session?.user?.name}님! 오늘도 좋은 하루 되세요.
+          안녕하세요, {givenName}님! 오늘도 좋은 하루 되세요.
         </p>
       </div>
 
