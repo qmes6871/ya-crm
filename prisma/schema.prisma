@@ -1,0 +1,551 @@
+// YA Solution CRM Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== 사용자 관련 ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  avatar        String?
+  role          UserRole  @default(USER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  permissions   UserPermission?
+  incentives    UserIncentive?
+
+  // 담당자로 배정된 프로젝트
+  projects      Project[]
+
+  // 상담자로 배정된 가망고객
+  leads         Lead[]
+
+  // 개인 업무
+  tasks         Task[]
+  assignedTasks Task[]    @relation("AssignedTasks")
+
+  // 캘린더 일정
+  calendarEvents CalendarEvent[]
+
+  // 커뮤니케이션 코멘트
+  comments      ProjectComment[]
+
+  // 문서 관리
+  quotes        Quote[]
+  uploadedFiles File[]
+
+  // 정산
+  settlements   Settlement[]
+
+  // 계정 관리
+  managedAccounts ManagedAccount[]
+
+  // 알림 설정
+  notificationSettings NotificationSetting?
+  notifications        Notification[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model UserPermission {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 메뉴별 접근 권한
+  clients       Boolean @default(true)
+  projects      Boolean @default(true)
+  leads         Boolean @default(true)
+  tasks         Boolean @default(true)
+  documents     Boolean @default(true)
+  accounts      Boolean @default(true)
+  settlements   Boolean @default(true)
+  revenue       Boolean @default(true)
+  settings      Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_permissions")
+}
+
+model UserIncentive {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 매출 유형별 인센티브 비율 (%)
+  advanceRate     Float    @default(0)   // 선수금
+  midPaymentRate  Float    @default(0)   // 중도금
+  balanceRate     Float    @default(0)   // 잔금
+  fullPaymentRate Float    @default(0)   // 전체지급
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("user_incentives")
+}
+
+// ==================== 거래처 관련 ====================
+
+model Client {
+  id              String   @id @default(cuid())
+  name            String                          // 거래처명
+  contact         String?                         // 연락처
+  contractDate    DateTime?                       // 계약날짜
+  firstDraftDate  DateTime?                       // 1차 시안 공유 일정
+  requirements    String?  @db.Text               // 진행 요청사항
+  note            String?  @db.Text               // 비고
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  requestTypes    ClientRequestType[]
+  payments        ClientPayment[]
+  projects        Project[]
+
+  @@map("clients")
+}
+
+model ClientRequestType {
+  id        String   @id @default(cuid())
+  clientId  String
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      RequestType
+  customType String?                             // 비고 (직접 입력)
+
+  @@map("client_request_types")
+}
+
+enum RequestType {
+  WEB_DEV          // 웹 개발
+  SHOPPING_MALL    // 쇼핑몰 개발
+  APP_DEV          // 앱 개발
+  PLATFORM_DEV     // 플랫폼 개발
+  CRM_DEV          // CRM 개발
+  OTHER            // 비고
+}
+
+model ClientPayment {
+  id        String      @id @default(cuid())
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type      PaymentType
+  amount    Float                                // 금액
+
+  @@map("client_payments")
+}
+
+enum PaymentType {
+  ADVANCE      // 선수금
+  MID_PAYMENT  // 중도금
+  BALANCE      // 잔금
+  FULL_PAYMENT // 전체지급
+}
+
+// ==================== 프로젝트 관련 ====================
+
+model Project {
+  id          String        @id @default(cuid())
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  managerId   String
+  manager     User          @relation(fields: [managerId], references: [id])
+  name        String
+  description String?       @db.Text
+  status      ProjectStatus @default(PLANNING)
+  progress    Int           @default(0)          // 진행률 (0-100)
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  schedules   ProjectSchedule[]
+  tasks       Task[]
+  comments    ProjectComment[]
+  files       File[]
+  contracts   ProjectContract[]
+  settlements Settlement[]
+  revenues    Revenue[]
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  PLANNING           // 기획
+  FIRST_DRAFT        // 1차 시안 작업
+  FIRST_DRAFT_REVIEW // 1차 시안 공개
+  REVISION           // 시안 수정
+  FINAL_REVIEW       // 시안 공개
+  OPEN               // 오픈
+  COMPLETED          // 완료
+}
+
+model ProjectSchedule {
+  id          String        @id @default(cuid())
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stage       ProjectStatus
+  stageName   String?                            // 커스텀 단계명
+  startDate   DateTime?
+  endDate     DateTime?
+  isCompleted Boolean       @default(false)
+  sortOrder   Int           @default(0)
+
+  @@map("project_schedules")
+}
+
+model ProjectComment {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  content     String   @db.Text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 첨부 파일
+  attachments CommentAttachment[]
+
+  @@map("project_comments")
+}
+
+model CommentAttachment {
+  id        String         @id @default(cuid())
+  commentId String
+  comment   ProjectComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  fileName  String
+  filePath  String
+  fileSize  Int
+  mimeType  String?
+
+  @@map("comment_attachments")
+}
+
+model ProjectContract {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fileName    String
+  filePath    String
+  fileSize    Int
+  mimeType    String?
+
+  createdAt   DateTime @default(now())
+
+  @@map("project_contracts")
+}
+
+// ==================== 가망고객 관련 ====================
+
+model Lead {
+  id               String       @id @default(cuid())
+  consultantId     String
+  consultant       User         @relation(fields: [consultantId], references: [id])
+  consultDate      DateTime     @default(now())      // 상담날짜
+  customerName     String                            // 고객 성함 및 회사명
+  contact          String?                           // 연락처
+  inquiry          String?      @db.Text             // 고객 문의사항
+  result           LeadResult   @default(NOT_CALCULATED)
+  resultNote       String?                           // 결과 비고
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Relations
+  sources          LeadSource[]
+  quotes           LeadQuote[]
+
+  @@map("leads")
+}
+
+enum LeadResult {
+  NOT_CALCULATED   // 결과 미 산출
+  QUOTE_PROVIDED   // 견적 안내
+  QUOTE_SENT       // 견적서 납기
+  MEETING          // 미팅
+  WAITING_RESPONSE // 회신 기다리는중
+  OTHER            // 비고
+}
+
+model LeadSource {
+  id         String     @id @default(cuid())
+  leadId     String
+  lead       Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type       SourceType
+  customType String?                              // 기타 (직접 입력)
+
+  @@map("lead_sources")
+}
+
+enum SourceType {
+  SOOMGO      // 숨고
+  KMONG       // 크몽
+  PHONE       // 전화
+  WEBSITE     // 홈페이지 접수
+  OTHER       // 기타
+}
+
+model LeadQuote {
+  id        String      @id @default(cuid())
+  leadId    String
+  lead      Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type      PaymentType
+  amount    Float                                // 금액
+
+  @@map("lead_quotes")
+}
+
+// ==================== 업무/일정 관련 ====================
+
+model Task {
+  id          String       @id @default(cuid())
+  title       String
+  description String?      @db.Text
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(NORMAL)
+  deadline    DateTime?
+
+  // 생성자
+  creatorId   String
+  creator     User         @relation(fields: [creatorId], references: [id])
+
+  // 담당자 (본인 또는 다른 사용자)
+  assigneeId  String
+  assignee    User         @relation("AssignedTasks", fields: [assigneeId], references: [id])
+
+  // 프로젝트 연동 (선택)
+  projectId   String?
+  project     Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  TODO        // 할 일
+  IN_PROGRESS // 진행
+  REVIEW      // 검토
+  COMPLETED   // 완료
+}
+
+enum TaskPriority {
+  LOW         // 낮음
+  NORMAL      // 보통
+  HIGH        // 높음
+  URGENT      // 긴급
+}
+
+model CalendarEvent {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text
+  startDate   DateTime
+  endDate     DateTime?
+  allDay      Boolean  @default(false)
+
+  // 업무와 연동 (선택)
+  taskId      String?  @unique
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("calendar_events")
+}
+
+// ==================== 문서관리 관련 ====================
+
+model Quote {
+  id           String      @id @default(cuid())
+  creatorId    String
+  creator      User        @relation(fields: [creatorId], references: [id])
+  quoteNumber  String      @unique               // 견적서 번호
+  clientName   String                            // 고객/회사명
+  clientContact String?                          // 연락처
+  validUntil   DateTime?                         // 유효기간
+  totalAmount  Float       @default(0)           // 총 금액
+  note         String?     @db.Text              // 비고
+  status       QuoteStatus @default(DRAFT)
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  items        QuoteItem[]
+
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT      // 초안
+  SENT       // 발송됨
+  ACCEPTED   // 승인됨
+  REJECTED   // 거절됨
+}
+
+model QuoteItem {
+  id          String @id @default(cuid())
+  quoteId     String
+  quote       Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String                             // 항목 설명
+  quantity    Int    @default(1)                 // 수량
+  unitPrice   Float                              // 단가
+  amount      Float                              // 금액
+
+  @@map("quote_items")
+}
+
+model File {
+  id          String    @id @default(cuid())
+  uploaderId  String
+  uploader    User      @relation(fields: [uploaderId], references: [id])
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  fileName    String
+  originalName String
+  filePath    String
+  fileSize    Int
+  mimeType    String?
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("files")
+}
+
+// ==================== 정산/매출 관련 ====================
+
+model Settlement {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  projectId   String?
+  project     Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  type        PaymentType
+  baseAmount  Float                              // 기준 금액
+  rate        Float                              // 인센티브 비율 (%)
+  amount      Float                              // 정산 금액
+  description String?
+  isPaid      Boolean     @default(false)
+  paidAt      DateTime?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("settlements")
+}
+
+model Revenue {
+  id          String      @id @default(cuid())
+  projectId   String?
+  project     Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  type        PaymentType
+  amount      Float
+  description String?
+  receivedAt  DateTime?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("revenues")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  category    String                             // 카테고리
+  amount      Float
+  description String?
+  paidAt      DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("expenses")
+}
+
+// ==================== 계정관리 관련 ====================
+
+model ManagedAccount {
+  id           String      @id @default(cuid())
+  ownerId      String
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  platform     String                            // 플랫폼
+  accountId    String                            // 아이디
+  password     String                            // 비밀번호 (암호화 필요)
+  socialLogin  SocialLoginType?
+  socialNote   String?                           // 소셜로그인 비고
+  isShared     Boolean     @default(false)       // 공유 계정 여부
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("managed_accounts")
+}
+
+enum SocialLoginType {
+  NAVER
+  KAKAO
+  GOOGLE
+  OTHER
+}
+
+// ==================== 알림 관련 ====================
+
+model NotificationSetting {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 알림 채널 설정
+  emailEnabled  Boolean @default(true)
+  smsEnabled    Boolean @default(false)
+  kakaoEnabled  Boolean @default(false)
+
+  // 알림 유형별 설정
+  taskReminder  Boolean @default(true)
+  projectUpdate Boolean @default(true)
+  newLead       Boolean @default(true)
+  settlement    Boolean @default(true)
+
+  @@map("notification_settings")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String   @db.Text
+  link      String?
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
