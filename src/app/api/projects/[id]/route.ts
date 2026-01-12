@@ -81,7 +81,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, description, status, progress, managerId } = body;
+    const { name, description, status, progress, managerId, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom } = body;
 
     const project = await prisma.project.update({
       where: { id },
@@ -91,6 +91,11 @@ export async function PATCH(
         ...(status && { status }),
         ...(progress !== undefined && { progress }),
         ...(managerId && { managerId }),
+        ...(deadline && { deadline: new Date(deadline) }),
+        ...(serverCost !== undefined && { serverCost }),
+        ...(serverCostCustom !== undefined && { serverCostCustom }),
+        ...(maintenance !== undefined && { maintenance }),
+        ...(maintenanceCustom !== undefined && { maintenanceCustom }),
       },
     });
 

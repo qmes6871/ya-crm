@@ -103,6 +103,7 @@ export default async function ProjectDetailPage({
           endpoint="/api/projects"
           redirectPath="/crm/projects"
           itemName={project.name}
+          buttonVariant="destructive"
         />
       </div>
 

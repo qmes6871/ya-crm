@@ -55,6 +55,9 @@ model User {
   notificationSettings NotificationSetting?
   notifications        Notification[]
 
+  // 출퇴근
+  attendances   Attendance[]
+
   @@map("users")
 }
 
@@ -100,6 +103,25 @@ model UserIncentive {
   updatedAt       DateTime @updatedAt
 
   @@map("user_incentives")
+}
+
+// ==================== 출퇴근 관련 ====================
+
+model Attendance {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime  @db.Date                    // 출근 날짜
+  checkIn   DateTime?                             // 출근 시간
+  checkOut  DateTime?                             // 퇴근 시간
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("attendances")
 }
 
 // ==================== 거래처 관련 ====================
@@ -172,6 +194,11 @@ model Project {
   description String?       @db.Text
   status      ProjectStatus @default(PLANNING)
   progress    Int           @default(0)          // 진행률 (0-100)
+  deadline    DateTime?                          // 프로젝트 마감일
+  serverCost       String?                       // 서버비용 타입
+  serverCostCustom String?                       // 서버비용 기타 텍스트
+  maintenance      String?                       // 유지보수 타입
+  maintenanceCustom String?                      // 유지보수 기타 텍스트
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -260,8 +287,8 @@ model CommentAttachment {
 
 model ProjectContract {
   id          String   @id @default(cuid())
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
   fileName    String
   filePath    String
   fileSize    Int

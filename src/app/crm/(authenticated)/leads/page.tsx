@@ -124,7 +124,14 @@ export default async function LeadsPage() {
               <TableBody>
                 {leadsWithTotals.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">{lead.customerName}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={`/crm/leads/${lead.id}`}
+                        className="hover:underline"
+                      >
+                        {lead.customerName}
+                      </Link>
+                    </TableCell>
                     <TableCell>{lead.contact || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

@@ -34,6 +34,26 @@ const paymentTypes = [
   { id: "FULL_PAYMENT", label: "전체지급" },
 ];
 
+const serverCostOptions = [
+  { id: "NONE", label: "미선택" },
+  { id: "GENERAL", label: "일반형 (월 3,000원)" },
+  { id: "BUSINESS", label: "비즈니스 (월 8,000원)" },
+  { id: "FIRST_CLASS", label: "퍼스트클래스 (월 15,000원)" },
+  { id: "GIANT", label: "자이언트 (월 20,000원)" },
+  { id: "UNLIMITED_PLUS", label: "무제한 트래픽 플러스 (월 30,000원)" },
+  { id: "OTHER", label: "기타" },
+];
+
+const maintenanceOptions = [
+  { id: "NONE", label: "미선택" },
+  { id: "BASIC_FREE", label: "기본 (무료)" },
+  { id: "BASIC", label: "베이직 (월 5,000원)" },
+  { id: "SPECIAL", label: "스페셜 (월 10,000원)" },
+  { id: "PRO", label: "프로 (월 20,000원)" },
+  { id: "PLUS", label: "플러스 (월 100,000원)" },
+  { id: "OTHER", label: "기타" },
+];
+
 export default function NewProjectPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,6 +65,11 @@ export default function NewProjectPage() {
   const [clientId, setClientId] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [serverCost, setServerCost] = useState("NONE");
+  const [serverCostCustom, setServerCostCustom] = useState("");
+  const [maintenance, setMaintenance] = useState("NONE");
+  const [maintenanceCustom, setMaintenanceCustom] = useState("");
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
 
   useEffect(() => {
@@ -115,6 +140,11 @@ export default function NewProjectPage() {
           clientId,
           name,
           description,
+          deadline,
+          serverCost: serverCost !== "NONE" ? serverCost : null,
+          serverCostCustom: serverCost === "OTHER" ? serverCostCustom : null,
+          maintenance: maintenance !== "NONE" ? maintenance : null,
+          maintenanceCustom: maintenance === "OTHER" ? maintenanceCustom : null,
           payments: paymentsData,
         }),
       });
@@ -193,6 +223,16 @@ export default function NewProjectPage() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="deadline">마감일 *</Label>
+                <Input
+                  id="deadline"
+                  type="date"
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="description">설명</Label>
                 <Textarea
                   id="description"
@@ -205,60 +245,117 @@ export default function NewProjectPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>매출</CardTitle>
-              <CardDescription>매출 유형별 금액을 입력하세요. (선택사항)</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                {paymentTypes.map((type) => (
-                  <Button
-                    key={type.id}
-                    type="button"
-                    variant={payments.find((p) => p.type === type.id) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => addPayment(type.id)}
-                    disabled={!!payments.find((p) => p.type === type.id)}
-                  >
-                    <Plus className="mr-1 h-3 w-3" />
-                    {type.label}
-                  </Button>
-                ))}
-              </div>
-              <div className="space-y-3">
-                {payments.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    매출 유형 버튼을 클릭하여 추가하세요.
-                  </p>
-                ) : (
-                  payments.map((payment) => (
-                    <div key={payment.type} className="flex items-center gap-2">
-                      <span className="w-20 text-sm font-medium">
-                        {paymentTypes.find((t) => t.id === payment.type)?.label}
-                      </span>
-                      <Input
-                        type="text"
-                        value={payment.amount}
-                        onChange={(e) => updatePaymentAmount(payment.type, e.target.value)}
-                        placeholder="금액 입력"
-                        className="flex-1"
-                      />
-                      <span className="text-sm text-gray-500">원</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removePayment(payment.type)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>서버비용 / 유지보수</CardTitle>
+                <CardDescription>서버비용과 유지보수 옵션을 선택하세요.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>서버비용</Label>
+                  <Select value={serverCost} onValueChange={setServerCost}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="서버비용을 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serverCostOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {serverCost === "OTHER" && (
+                    <Input
+                      value={serverCostCustom}
+                      onChange={(e) => setServerCostCustom(e.target.value)}
+                      placeholder="서버비용 직접 입력"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>유지보수</Label>
+                  <Select value={maintenance} onValueChange={setMaintenance}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="유지보수를 선택하세요" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {maintenanceOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {maintenance === "OTHER" && (
+                    <Input
+                      value={maintenanceCustom}
+                      onChange={(e) => setMaintenanceCustom(e.target.value)}
+                      placeholder="유지보수 직접 입력"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>매출</CardTitle>
+                <CardDescription>매출 유형별 금액을 입력하세요. (선택사항)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {paymentTypes.map((type) => (
+                    <Button
+                      key={type.id}
+                      type="button"
+                      variant={payments.find((p) => p.type === type.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => addPayment(type.id)}
+                      disabled={!!payments.find((p) => p.type === type.id)}
+                    >
+                      <Plus className="mr-1 h-3 w-3" />
+                      {type.label}
+                    </Button>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {payments.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      매출 유형 버튼을 클릭하여 추가하세요.
+                    </p>
+                  ) : (
+                    payments.map((payment) => (
+                      <div key={payment.type} className="flex items-center gap-2">
+                        <span className="w-20 text-sm font-medium">
+                          {paymentTypes.find((t) => t.id === payment.type)?.label}
+                        </span>
+                        <Input
+                          type="text"
+                          value={payment.amount}
+                          onChange={(e) => updatePaymentAmount(payment.type, e.target.value)}
+                          placeholder="금액 입력"
+                          className="flex-1"
+                        />
+                        <span className="text-sm text-gray-500">원</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePayment(payment.type)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-4">
@@ -267,7 +364,7 @@ export default function NewProjectPage() {
               취소
             </Button>
           </Link>
-          <Button type="submit" disabled={isLoading || !clientId || !name}>
+          <Button type="submit" disabled={isLoading || !clientId || !name || !deadline}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -18,6 +18,8 @@ import {
   Calendar,
   Users,
   Trash2,
+  Wrench,
+  Clock,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -35,14 +37,24 @@ const menuItems: MenuItem[] = [
     icon: <LayoutDashboard className="h-5 w-5" />,
   },
   {
+    title: "출근 / 퇴근",
+    href: "/crm/attendance",
+    icon: <Clock className="h-5 w-5" />,
+  },
+  {
     title: "거래처 관리",
     href: "/crm/clients",
     icon: <Building2 className="h-5 w-5" />,
   },
   {
-    title: "프로젝트",
+    title: "작업 프로젝트",
     href: "/crm/projects",
     icon: <FolderKanban className="h-5 w-5" />,
+  },
+  {
+    title: "오픈 프로젝트(유지보수)",
+    href: "/crm/projects/maintenance",
+    icon: <Wrench className="h-5 w-5" />,
   },
   {
     title: "가망고객",
@@ -98,6 +110,7 @@ const menuItems: MenuItem[] = [
     icon: <Settings className="h-5 w-5" />,
     submenu: [
       { title: "사용자/권한", href: "/crm/settings/users" },
+      { title: "출퇴근 관리", href: "/crm/settings/attendance" },
       { title: "알림 설정", href: "/crm/settings/notifications" },
     ],
   },

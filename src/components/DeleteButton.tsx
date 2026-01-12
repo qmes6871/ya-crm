@@ -60,7 +60,10 @@ export function DeleteButton({
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant={buttonVariant} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+        <Button
+          variant={buttonVariant}
+          className={buttonVariant === "destructive" ? "" : "text-red-600 hover:text-red-700 hover:bg-red-50"}
+        >
           <Trash2 className="mr-2 h-4 w-4" />
           삭제
         </Button>

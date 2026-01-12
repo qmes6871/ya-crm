@@ -55,18 +55,22 @@ export async function POST(request: Request) {
         contractDate: contractDate ? new Date(contractDate) : null,
         firstDraftDate: firstDraftDate ? new Date(firstDraftDate) : null,
         requirements,
-        requestTypes: {
-          create: requestTypes.map((rt: { type: string; customType?: string }) => ({
-            type: rt.type,
-            customType: rt.customType,
-          })),
-        },
-        payments: {
-          create: payments.map((p: { type: string; amount: number }) => ({
-            type: p.type,
-            amount: p.amount,
-          })),
-        },
+        requestTypes: requestTypes?.length
+          ? {
+              create: requestTypes.map((rt: { type: string; customType?: string }) => ({
+                type: rt.type,
+                customType: rt.customType,
+              })),
+            }
+          : undefined,
+        payments: payments?.length
+          ? {
+              create: payments.map((p: { type: string; amount: number }) => ({
+                type: p.type,
+                amount: p.amount,
+              })),
+            }
+          : undefined,
       },
       include: {
         requestTypes: true,

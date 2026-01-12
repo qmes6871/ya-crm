@@ -49,11 +49,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { clientId, name, description, payments } = body;
+    const { clientId, name, description, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom, payments } = body;
 
-    if (!clientId || !name) {
+    if (!clientId || !name || !deadline) {
       return NextResponse.json(
-        { error: "Client and project name are required" },
+        { error: "Client, project name, and deadline are required" },
         { status: 400 }
       );
     }
@@ -64,6 +64,11 @@ export async function POST(request: Request) {
         managerId: session.user.id,
         name,
         description,
+        deadline: new Date(deadline),
+        serverCost,
+        serverCostCustom,
+        maintenance,
+        maintenanceCustom,
         status: "PLANNING",
         progress: 0,
         schedules: {

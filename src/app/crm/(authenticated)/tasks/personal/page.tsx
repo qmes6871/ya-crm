@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Calendar, Loader2, Edit, Trash2 } from "lucide-react";
+import { Plus, Calendar, Loader2, Edit, Trash2, FolderKanban } from "lucide-react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -338,9 +339,14 @@ export default function PersonalTasksPage() {
                       )}
                     </div>
                     {task.project && (
-                      <p className="text-xs text-primary mt-2">
+                      <Link
+                        href={`/crm/projects/${task.project.id}`}
+                        className="flex items-center gap-1 text-xs text-gray-600 hover:underline mt-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FolderKanban className="h-3 w-3" />
                         {task.project.name}
-                      </p>
+                      </Link>
                     )}
                     {/* Status change buttons */}
                     <div className="mt-3 flex gap-1 flex-wrap">

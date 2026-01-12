@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, User, Calendar, Edit, Loader2 } from "lucide-react";
+import { Building2, User, Calendar, Edit, Loader2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -39,6 +39,44 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   COMPLETED: { label: "완료", color: "bg-emerald-100 text-emerald-800" },
 };
 
+const serverCostLabels: Record<string, string> = {
+  GENERAL: "일반형 (월 3,000원)",
+  BUSINESS: "비즈니스 (월 8,000원)",
+  FIRST_CLASS: "퍼스트클래스 (월 15,000원)",
+  GIANT: "자이언트 (월 20,000원)",
+  UNLIMITED_PLUS: "무제한 트래픽 플러스 (월 30,000원)",
+  OTHER: "기타",
+};
+
+const maintenanceLabels: Record<string, string> = {
+  BASIC_FREE: "기본 (무료)",
+  BASIC: "베이직 (월 5,000원)",
+  SPECIAL: "스페셜 (월 10,000원)",
+  PRO: "프로 (월 20,000원)",
+  PLUS: "플러스 (월 100,000원)",
+  OTHER: "기타",
+};
+
+const serverCostOptions = [
+  { id: "NONE", label: "미선택" },
+  { id: "GENERAL", label: "일반형 (월 3,000원)" },
+  { id: "BUSINESS", label: "비즈니스 (월 8,000원)" },
+  { id: "FIRST_CLASS", label: "퍼스트클래스 (월 15,000원)" },
+  { id: "GIANT", label: "자이언트 (월 20,000원)" },
+  { id: "UNLIMITED_PLUS", label: "무제한 트래픽 플러스 (월 30,000원)" },
+  { id: "OTHER", label: "기타" },
+];
+
+const maintenanceOptions = [
+  { id: "NONE", label: "미선택" },
+  { id: "BASIC_FREE", label: "기본 (무료)" },
+  { id: "BASIC", label: "베이직 (월 5,000원)" },
+  { id: "SPECIAL", label: "스페셜 (월 10,000원)" },
+  { id: "PRO", label: "프로 (월 20,000원)" },
+  { id: "PLUS", label: "플러스 (월 100,000원)" },
+  { id: "OTHER", label: "기타" },
+];
+
 interface ProjectOverviewProps {
   project: {
     id: string;
@@ -46,6 +84,11 @@ interface ProjectOverviewProps {
     description: string | null;
     status: string;
     progress: number;
+    deadline: Date | null;
+    serverCost: string | null;
+    serverCostCustom: string | null;
+    maintenance: string | null;
+    maintenanceCustom: string | null;
     createdAt: Date;
     client: {
       id: string;
@@ -89,6 +132,11 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
     status: project.status,
     progress: project.progress,
     managerId: project.manager.id,
+    deadline: project.deadline ? format(new Date(project.deadline), "yyyy-MM-dd") : "",
+    serverCost: project.serverCost || "NONE",
+    serverCostCustom: project.serverCostCustom || "",
+    maintenance: project.maintenance || "NONE",
+    maintenanceCustom: project.maintenanceCustom || "",
   });
 
   const handleSave = async () => {
@@ -97,7 +145,13 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
       const response = await fetch(`/api/projects/${project.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          serverCost: formData.serverCost !== "NONE" ? formData.serverCost : null,
+          serverCostCustom: formData.serverCost === "OTHER" ? formData.serverCostCustom : null,
+          maintenance: formData.maintenance !== "NONE" ? formData.maintenance : null,
+          maintenanceCustom: formData.maintenance === "OTHER" ? formData.maintenanceCustom : null,
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to update project");
@@ -171,6 +225,67 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="deadline">마감일</Label>
+                  <Input
+                    id="deadline"
+                    type="date"
+                    value={formData.deadline}
+                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>서버비용</Label>
+                  <Select
+                    value={formData.serverCost}
+                    onValueChange={(value) => setFormData({ ...formData, serverCost: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serverCostOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.serverCost === "OTHER" && (
+                    <Input
+                      value={formData.serverCostCustom}
+                      onChange={(e) => setFormData({ ...formData, serverCostCustom: e.target.value })}
+                      placeholder="서버비용 직접 입력"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>유지보수</Label>
+                  <Select
+                    value={formData.maintenance}
+                    onValueChange={(value) => setFormData({ ...formData, maintenance: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {maintenanceOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.maintenance === "OTHER" && (
+                    <Input
+                      value={formData.maintenanceCustom}
+                      onChange={(e) => setFormData({ ...formData, maintenanceCustom: e.target.value })}
+                      placeholder="유지보수 직접 입력"
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="status">상태</Label>
                   <Select
                     value={formData.status}
@@ -238,6 +353,41 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
               <User className="h-4 w-4 text-gray-400" />
               <span className="text-sm font-medium">{project.manager.name}</span>
             </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">마감일</span>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-gray-400" />
+              {project.deadline ? (
+                <span className={`text-sm font-medium ${
+                  new Date(project.deadline) < new Date() ? "text-red-600" : ""
+                }`}>
+                  {format(new Date(project.deadline), "yyyy년 MM월 dd일", { locale: ko })}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">미설정</span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">서버비용</span>
+            <span className="text-sm font-medium">
+              {project.serverCost === "OTHER"
+                ? project.serverCostCustom
+                : project.serverCost
+                  ? serverCostLabels[project.serverCost]
+                  : <span className="text-gray-400">미설정</span>}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-gray-500">유지보수</span>
+            <span className="text-sm font-medium">
+              {project.maintenance === "OTHER"
+                ? project.maintenanceCustom
+                : project.maintenance
+                  ? maintenanceLabels[project.maintenance]
+                  : <span className="text-gray-400">미설정</span>}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">생성일</span>
