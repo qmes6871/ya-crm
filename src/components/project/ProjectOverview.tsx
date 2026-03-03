@@ -25,7 +25,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, User, Calendar, Edit, Loader2, Clock } from "lucide-react";
+import { Building2, User, Calendar, Edit, Loader2, Clock, Server, ExternalLink, Power, PowerOff } from "lucide-react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -102,6 +103,14 @@ interface ProjectOverviewProps {
       email: string;
     };
     payments: { id: string; type: string; amount: number }[];
+    servers: {
+      id: string;
+      name: string;
+      domain: string | null;
+      serverType: string | null;
+      isActive: boolean;
+      localPath: string | null;
+    }[];
   };
   users: { id: string; name: string; email: string }[];
 }
@@ -169,7 +178,72 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
   const totalPayment = project.payments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
+    <div className="space-y-6">
+      {/* 연동된 서버 */}
+      {project.servers && project.servers.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Server className="h-5 w-5" />
+              연동된 서버
+            </CardTitle>
+            <CardDescription>이 프로젝트에 연동된 서버 목록</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {project.servers.map((server) => (
+                <div
+                  key={server.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    !server.isActive ? "bg-red-50 border-red-200" : "bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {server.isActive ? (
+                      <Power className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <PowerOff className="h-4 w-4 text-red-500" />
+                    )}
+                    <div>
+                      <Link
+                        href={`/crm/servers/${server.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {server.name}
+                      </Link>
+                      {server.domain && (
+                        <div className="flex items-center gap-1 text-sm text-gray-500">
+                          <a
+                            href={server.domain.startsWith("http") ? server.domain : `https://${server.domain}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 hover:text-blue-600"
+                          >
+                            {server.domain.replace(/^https?:\/\//, "")}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {server.serverType && (
+                      <Badge variant="secondary" className="text-xs">
+                        {serverCostLabels[server.serverType]?.replace(/ \(.*\)/, "") || server.serverType}
+                      </Badge>
+                    )}
+                    <Badge className={server.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                      {server.isActive ? "활성" : "중단"}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid gap-6 md:grid-cols-2">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -461,6 +535,7 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

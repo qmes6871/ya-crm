@@ -11,8 +11,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Calendar, Loader2, Edit, Trash2, User, FolderKanban } from "lucide-react";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, differenceInDays, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
+
+const getDday = (deadline: string) => {
+  const today = startOfDay(new Date());
+  const deadlineDate = startOfDay(new Date(deadline));
+  const diff = differenceInDays(deadlineDate, today);
+
+  if (diff === 0) return { text: "D-Day", color: "text-red-600 font-semibold" };
+  if (diff > 0) return { text: `D-${diff}`, color: diff <= 3 ? "text-orange-600" : "text-gray-500" };
+  return { text: `D+${Math.abs(diff)}`, color: "text-red-600" };
+};
 
 interface Task {
   id: string;
@@ -32,6 +42,11 @@ interface UserType {
   email: string;
 }
 
+interface Project {
+  id: string;
+  name: string;
+}
+
 const statusColumns = [
   { id: "TODO", label: "할 일", color: "bg-gray-100" },
   { id: "IN_PROGRESS", label: "진행", color: "bg-blue-100" },
@@ -49,12 +64,14 @@ const priorityLabels: Record<string, { label: string; color: string }> = {
 export default function AllTasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filterUser, setFilterUser] = useState<string>("all");
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   // New task form
   const [title, setTitle] = useState("");
@@ -62,6 +79,7 @@ export default function AllTasksPage() {
   const [priority, setPriority] = useState("NORMAL");
   const [deadline, setDeadline] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+  const [projectId, setProjectId] = useState("");
 
   // Edit form
   const [editTitle, setEditTitle] = useState("");
@@ -70,10 +88,12 @@ export default function AllTasksPage() {
   const [editDeadline, setEditDeadline] = useState("");
   const [editStatus, setEditStatus] = useState("TODO");
   const [editAssigneeId, setEditAssigneeId] = useState("");
+  const [editProjectId, setEditProjectId] = useState("");
 
   useEffect(() => {
     fetchTasks();
     fetchUsers();
+    fetchProjects();
   }, []);
 
   const fetchTasks = async () => {
@@ -105,6 +125,18 @@ export default function AllTasksPage() {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const res = await fetch("/api/projects");
+      if (res.ok) {
+        const data = await res.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -119,6 +151,7 @@ export default function AllTasksPage() {
           priority,
           deadline: deadline || null,
           assigneeId,
+          projectId: projectId || null,
         }),
       });
 
@@ -127,6 +160,7 @@ export default function AllTasksPage() {
         setDescription("");
         setPriority("NORMAL");
         setDeadline("");
+        setProjectId("");
         setIsDialogOpen(false);
         fetchTasks();
       }
@@ -145,6 +179,7 @@ export default function AllTasksPage() {
     setEditDeadline(task.deadline ? task.deadline.split("T")[0] : "");
     setEditStatus(task.status);
     setEditAssigneeId(task.assignee.id);
+    setEditProjectId(task.project?.id || "");
     setIsEditDialogOpen(true);
   };
 
@@ -164,6 +199,7 @@ export default function AllTasksPage() {
           deadline: editDeadline || null,
           status: editStatus,
           assigneeId: editAssigneeId,
+          projectId: editProjectId || null,
         }),
       });
 
@@ -219,6 +255,12 @@ export default function AllTasksPage() {
 
   const getTasksByStatus = (status: string) =>
     filteredTasks.filter((task) => task.status === status);
+
+  const COMPACT_FROM = 3; // 4개 이상이면 간략 표시
+
+  const toggleTaskExpand = (taskId: string) => {
+    setExpandedTaskId((prev) => (prev === taskId ? null : taskId));
+  };
 
   if (isLoading) {
     return (
@@ -297,6 +339,22 @@ export default function AllTasksPage() {
                     rows={3}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project">프로젝트</Label>
+                  <Select value={projectId || "none"} onValueChange={(val) => setProjectId(val === "none" ? "" : val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="프로젝트 선택 (선택사항)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">없음</SelectItem>
+                      {projects.map((project) => (
+                        <SelectItem key={project.id} value={project.id}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="priority">긴급성</Label>
@@ -349,99 +407,174 @@ export default function AllTasksPage() {
 
       {/* Kanban Board */}
       <div className="grid grid-cols-4 gap-4">
-        {statusColumns.map((column) => (
-          <div key={column.id} className={`rounded-lg p-4 ${column.color}`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">{column.label}</h3>
-              <Badge variant="secondary">
-                {getTasksByStatus(column.id).length}
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {getTasksByStatus(column.id).map((task) => (
-                <Card
-                  key={task.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium flex-1">{task.title}</h4>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => handleEditTask(task)}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 text-red-500"
-                          onClick={() => handleDeleteTask(task.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                    {task.description && (
-                      <p className="text-sm text-gray-500 mb-2 line-clamp-2">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between mb-2">
-                      <Badge className={priorityLabels[task.priority].color}>
-                        {priorityLabels[task.priority].label}
-                      </Badge>
-                      {task.deadline && (
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(task.deadline), "MM.dd", { locale: ko })}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-primary">
-                      <User className="h-3 w-3" />
-                      {task.assignee.name}
-                    </div>
-                    {task.project && (
-                      <Link
-                        href={`/crm/projects/${task.project.id}`}
-                        className="flex items-center gap-1 text-xs text-gray-600 hover:underline mt-1"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <FolderKanban className="h-3 w-3" />
-                        {task.project.name}
-                      </Link>
-                    )}
-                    {/* Status change buttons */}
-                    <div className="mt-3 flex gap-1 flex-wrap">
-                      {statusColumns
-                        .filter((s) => s.id !== task.status)
-                        .map((s) => (
-                          <Button
-                            key={s.id}
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs h-6 px-2"
-                            onClick={() => updateTaskStatus(task.id, s.id)}
+        {statusColumns.map((column) => {
+          const columnTasks = getTasksByStatus(column.id);
+          const isCompact = columnTasks.length >= COMPACT_FROM + 1; // 4개 이상이면 간략 표시
+
+          return (
+            <div key={column.id} className={`rounded-lg p-4 ${column.color}`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">{column.label}</h3>
+                <Badge variant="secondary">
+                  {columnTasks.length}
+                </Badge>
+              </div>
+              <div className={isCompact ? "space-y-2" : "space-y-3"}>
+                {columnTasks.map((task) => {
+                  const isExpanded = expandedTaskId === task.id;
+
+                  return isCompact && !isExpanded ? (
+                    // 4개 이상일 때 간략 표시 (펼쳐지지 않은 상태)
+                    <Card
+                      key={task.id}
+                      className="cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => toggleTaskExpand(task.id)}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                              task.priority === "URGENT" ? "bg-red-500" :
+                              task.priority === "HIGH" ? "bg-orange-500" :
+                              task.priority === "NORMAL" ? "bg-blue-500" : "bg-gray-400"
+                            }`} />
+                            <span className="text-sm font-medium truncate">{task.title}</span>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-red-500"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-1 ml-4">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-xs text-primary flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {task.assignee.name}
+                            </span>
+                            {task.project && (
+                              <Link
+                                href={`/crm/projects/${task.project.id}`}
+                                className="flex items-center gap-1 text-xs text-gray-500 hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <FolderKanban className="h-3 w-3" />
+                                <span className="truncate max-w-[80px]">{task.project.name}</span>
+                              </Link>
+                            )}
+                          </div>
+                          {task.deadline && (
+                            <span className="text-xs flex items-center gap-1 flex-shrink-0">
+                              <Calendar className="h-3 w-3 text-gray-500" />
+                              <span className="text-gray-500">{format(new Date(task.deadline), "MM.dd", { locale: ko })}</span>
+                              <span className={getDday(task.deadline).color}>({getDday(task.deadline).text})</span>
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    // 전체 카드 표시 (3개 이하이거나 펼쳐진 상태)
+                    <Card
+                      key={task.id}
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${isCompact && isExpanded ? "ring-2 ring-primary" : ""}`}
+                      onClick={() => isCompact && toggleTaskExpand(task.id)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium flex-1">{task.title}</h4>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={(e) => { e.stopPropagation(); handleEditTask(task); }}
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-red-500"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                        {task.description && (
+                          <p className="text-sm text-gray-500 mb-2 line-clamp-2">
+                            {task.description}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge className={priorityLabels[task.priority].color}>
+                            {priorityLabels[task.priority].label}
+                          </Badge>
+                          {task.deadline && (
+                            <span className="text-xs flex items-center gap-1">
+                              <Calendar className="h-3 w-3 text-gray-500" />
+                              <span className="text-gray-500">{format(new Date(task.deadline), "MM.dd", { locale: ko })}</span>
+                              <span className={getDday(task.deadline).color}>({getDday(task.deadline).text})</span>
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-primary">
+                          <User className="h-3 w-3" />
+                          {task.assignee.name}
+                        </div>
+                        {task.project && (
+                          <Link
+                            href={`/crm/projects/${task.project.id}`}
+                            className="flex items-center gap-1 text-xs text-gray-600 hover:underline mt-1"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {s.label}
-                          </Button>
-                        ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {getTasksByStatus(column.id).length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-4">
-                  업무 없음
-                </p>
-              )}
+                            <FolderKanban className="h-3 w-3" />
+                            {task.project.name}
+                          </Link>
+                        )}
+                        {/* Status change buttons */}
+                        <div className="mt-3 flex gap-1 flex-wrap">
+                          {statusColumns
+                            .filter((s) => s.id !== task.status)
+                            .map((s) => (
+                              <Button
+                                key={s.id}
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-6 px-2"
+                                onClick={(e) => { e.stopPropagation(); updateTaskStatus(task.id, s.id); }}
+                              >
+                                {s.label}
+                              </Button>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+                {columnTasks.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-4">
+                    업무 없음
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Edit Dialog */}
@@ -486,6 +619,22 @@ export default function AllTasksPage() {
                 placeholder="업무 설명"
                 rows={3}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="editProject">프로젝트</Label>
+              <Select value={editProjectId || "none"} onValueChange={(val) => setEditProjectId(val === "none" ? "" : val)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="프로젝트 선택 (선택사항)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">없음</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Loader2, Plus, X } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, X, Upload, FileText, Image, File } from "lucide-react";
 import Link from "next/link";
 
 interface Client {
+  id: string;
+  name: string;
+}
+
+interface User {
   id: string;
   name: string;
 }
@@ -60,9 +65,12 @@ export default function NewProjectPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(true);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
   // Form state
   const [clientId, setClientId] = useState("");
+  const [managerId, setManagerId] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -71,6 +79,8 @@ export default function NewProjectPage() {
   const [maintenance, setMaintenance] = useState("NONE");
   const [maintenanceCustom, setMaintenanceCustom] = useState("");
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Check for clientId in URL params
@@ -97,6 +107,24 @@ export default function NewProjectPage() {
     fetchClients();
   }, []);
 
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const response = await fetch("/api/users");
+        if (response.ok) {
+          const data = await response.json();
+          const activeUsers = data.filter((user: User & { isActive: boolean }) => user.isActive);
+          setUsers(activeUsers);
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }
+    fetchUsers();
+  }, []);
+
   const addPayment = (type: string) => {
     if (!payments.find((p) => p.type === type)) {
       setPayments([...payments, { type, amount: "" }]);
@@ -121,6 +149,32 @@ export default function NewProjectPage() {
     setPayments(payments.filter((p) => p.type !== type));
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setAttachedFiles((prev) => [...prev, ...newFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
+
+  const getFileIcon = (mimeType: string) => {
+    if (mimeType.startsWith("image/")) return <Image className="h-4 w-4 text-blue-500" />;
+    if (mimeType.includes("pdf")) return <FileText className="h-4 w-4 text-red-500" />;
+    return <File className="h-4 w-4 text-gray-400" />;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -138,6 +192,7 @@ export default function NewProjectPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientId,
+          managerId: managerId || undefined,
           name,
           description,
           deadline,
@@ -150,6 +205,21 @@ export default function NewProjectPage() {
       });
 
       if (!response.ok) throw new Error("Failed to create project");
+
+      const project = await response.json();
+
+      // 첨부파일이 있으면 업로드
+      if (attachedFiles.length > 0) {
+        const formData = new FormData();
+        attachedFiles.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        await fetch(`/api/projects/${project.id}/files`, {
+          method: "POST",
+          body: formData,
+        });
+      }
 
       router.push("/crm/projects");
       router.refresh();
@@ -213,6 +283,28 @@ export default function NewProjectPage() {
                 )}
               </div>
               <div className="space-y-2">
+                <Label htmlFor="manager">담당자</Label>
+                {isLoadingUsers ? (
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    담당자 목록 로딩 중...
+                  </div>
+                ) : (
+                  <Select value={managerId || undefined} onValueChange={setManagerId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="담당자를 선택하세요 (선택사항)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="name">프로젝트명 *</Label>
                 <Input
                   id="name"
@@ -241,6 +333,59 @@ export default function NewProjectPage() {
                   placeholder="프로젝트 설명을 입력하세요"
                   rows={4}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>첨부파일</Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      파일 선택
+                    </Button>
+                    <p className="text-xs text-gray-500">
+                      여러 파일을 선택할 수 있습니다
+                    </p>
+                  </div>
+                  {attachedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {attachedFiles.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-gray-50 rounded-md px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            {getFileIcon(file.type)}
+                            <span className="text-sm truncate">{file.name}</span>
+                            <span className="text-xs text-gray-400 shrink-0">
+                              ({formatFileSize(file.size)})
+                            </span>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeFile(index)}
+                            className="shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -212,6 +212,7 @@ model Project {
   settlements Settlement[]
   revenues    Revenue[]
   payments    ProjectPayment[]
+  servers     Server[]
 
   @@map("projects")
 }
@@ -556,6 +557,51 @@ enum SocialLoginType {
   KAKAO
   GOOGLE
   OTHER
+}
+
+// ==================== 서버 관리 관련 ====================
+
+model Server {
+  id              String   @id @default(cuid())
+  projectId       String
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name            String                          // 서버명
+  serverType      String?                         // 서버 타입 (GENERAL, BUSINESS, etc.)
+  serverTypeCustom String?                        // 기타 타입 텍스트
+  localPath       String?                         // 로컬 폴더 경로 (/var/www 하위)
+  paymentDay      Int?                            // 서버 비용 결제일 (1-31)
+  isActive        Boolean  @default(true)         // 서버 활성화 상태
+  suspendedAt     DateTime?                       // 중단 일시
+
+  hostingProvider       String?                   // 호스팅 업체 (SELF, CAFE24, GABIA, AWS, OTHER)
+  hostingProviderCustom String?                   // 기타 호스팅 업체명
+  ipAddress             String?                   // IP 주소 (레거시)
+  domain          String?                         // 도메인
+  githubUrl       String?                         // 깃허브 경로
+
+  adminUrl        String?                         // 관리자 URL
+  adminId         String?                         // 관리자 아이디
+  adminPassword   String?                         // 관리자 비밀번호
+
+  ftpHost         String?                         // FTP 호스트
+  ftpId           String?                         // FTP 아이디
+  ftpPassword     String?                         // FTP 비밀번호
+  ftpPort         String?                         // FTP 포트
+
+  dbHost          String?                         // DB 호스트
+  dbPort          String?                         // DB 포트
+  dbName          String?                         // DB 이름
+  dbUser          String?                         // DB 사용자
+  dbPassword      String?                         // DB 비밀번호
+
+  note            String?  @db.Text               // 메모
+  trafficResetAt  DateTime?                       // 트래픽 초기화 날짜
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("servers")
 }
 
 // ==================== 알림 관련 ====================

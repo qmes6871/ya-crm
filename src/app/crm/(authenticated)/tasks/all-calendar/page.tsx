@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Plus, Loader2, User } from "lucide-react";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
+import { ChevronLeft, ChevronRight, Plus, Loader2, Trash2 } from "lucide-react";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths, differenceInDays, startOfDay } from "date-fns";
 import { ko } from "date-fns/locale";
 
 interface Task {
@@ -35,6 +36,13 @@ const priorityColors: Record<string, string> = {
   URGENT: "bg-red-200",
 };
 
+const priorityLabels: Record<string, string> = {
+  LOW: "낮음",
+  NORMAL: "보통",
+  HIGH: "높음",
+  URGENT: "긴급",
+};
+
 const statusLabels: Record<string, string> = {
   TODO: "할 일",
   IN_PROGRESS: "진행",
@@ -54,22 +62,41 @@ const userColors = [
   "border-l-4 border-teal-500",
 ];
 
+// D-Day calculation helper
+const getDday = (deadline: string) => {
+  const today = startOfDay(new Date());
+  const deadlineDate = startOfDay(new Date(deadline));
+  const diff = differenceInDays(deadlineDate, today);
+
+  if (diff === 0) return { text: "D-Day", color: "text-red-600 font-semibold" };
+  if (diff > 0) return { text: `D-${diff}`, color: diff <= 3 ? "text-orange-600" : "text-gray-500" };
+  return { text: `D+${Math.abs(diff)}`, color: "text-red-600" };
+};
+
 export default function AllCalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterUser, setFilterUser] = useState<string>("all");
+
+  // Dialog states
+  const [isDateDialogOpen, setIsDateDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // New task form
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("NORMAL");
+  const [status, setStatus] = useState("TODO");
   const [deadline, setDeadline] = useState("");
   const [assigneeId, setAssigneeId] = useState("");
+
+  // Edit task
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -123,12 +150,8 @@ export default function AllCalendarPage() {
       });
 
       if (res.ok) {
-        setTitle("");
-        setDescription("");
-        setPriority("NORMAL");
-        setDeadline("");
-        setIsDialogOpen(false);
-        setSelectedDate(null);
+        resetForm();
+        setIsAddDialogOpen(false);
         fetchTasks();
       }
     } catch (error) {
@@ -138,10 +161,91 @@ export default function AllCalendarPage() {
     }
   };
 
+  const handleUpdateTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/tasks/${editingTask.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          priority,
+          status,
+          deadline: deadline || null,
+          assigneeId,
+        }),
+      });
+
+      if (res.ok) {
+        setIsEditDialogOpen(false);
+        setEditingTask(null);
+        resetForm();
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error("Error updating task:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!editingTask) return;
+    if (!confirm("정말 이 업무를 삭제하시겠습니까?")) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/tasks/${editingTask.id}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setIsEditDialogOpen(false);
+        setEditingTask(null);
+        resetForm();
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPriority("NORMAL");
+    setStatus("TODO");
+    setDeadline("");
+    setSelectedDate(null);
+  };
+
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
     setDeadline(format(date, "yyyy-MM-dd"));
-    setIsDialogOpen(true);
+    setIsDateDialogOpen(true);
+  };
+
+  const handleTaskClick = (e: React.MouseEvent, task: Task) => {
+    e.stopPropagation();
+    setEditingTask(task);
+    setTitle(task.title);
+    setDescription(task.description || "");
+    setPriority(task.priority);
+    setStatus(task.status);
+    setDeadline(task.deadline ? format(new Date(task.deadline), "yyyy-MM-dd") : "");
+    setAssigneeId(task.assignee.id);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleAddFromDateDialog = () => {
+    setIsDateDialogOpen(false);
+    setIsAddDialogOpen(true);
   };
 
   const calendarDays = useMemo(() => {
@@ -174,6 +278,8 @@ export default function AllCalendarPage() {
     );
   };
 
+  const selectedDateTasks = selectedDate ? getTasksForDate(selectedDate) : [];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -205,7 +311,7 @@ export default function AllCalendarPage() {
           </Select>
           <Button onClick={() => {
             setDeadline(format(new Date(), "yyyy-MM-dd"));
-            setIsDialogOpen(true);
+            setIsAddDialogOpen(true);
           }}>
             <Plus className="mr-2 h-4 w-4" />
             일정 추가
@@ -284,12 +390,13 @@ export default function AllCalendarPage() {
                     {dayTasks.slice(0, 3).map((task) => (
                       <div
                         key={task.id}
-                        className={`text-xs p-1 rounded truncate ${
+                        className={`text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 ${
                           priorityColors[task.priority]
                         } ${userColors[getUserColorIndex(task.assignee.id)]} ${
                           task.status === "COMPLETED" ? "line-through opacity-60" : ""
                         }`}
                         title={`${task.title} (${task.assignee.name} - ${statusLabels[task.status]})`}
+                        onClick={(e) => handleTaskClick(e, task)}
                       >
                         <span className="text-[10px] text-gray-600">{task.assignee.name}</span>
                         <div>{task.title}</div>
@@ -340,8 +447,72 @@ export default function AllCalendarPage() {
         </div>
       </div>
 
+      {/* Date Tasks Dialog - Shows all tasks for selected date */}
+      <Dialog open={isDateDialogOpen} onOpenChange={setIsDateDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedDate && format(selectedDate, "yyyy년 MM월 dd일 (EEEE)", { locale: ko })}
+            </DialogTitle>
+            <DialogDescription>
+              이 날짜의 모든 일정입니다. ({selectedDateTasks.length}개)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {selectedDateTasks.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">이 날짜에 일정이 없습니다.</p>
+            ) : (
+              selectedDateTasks.map((task) => {
+                const dday = task.deadline ? getDday(task.deadline) : null;
+                return (
+                  <div
+                    key={task.id}
+                    className={`p-3 rounded-lg border cursor-pointer hover:bg-gray-50 ${
+                      priorityColors[task.priority]
+                    } ${userColors[getUserColorIndex(task.assignee.id)]}`}
+                    onClick={() => {
+                      setIsDateDialogOpen(false);
+                      handleTaskClick({ stopPropagation: () => {} } as React.MouseEvent, task);
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">{task.title}</span>
+                      <div className="flex items-center gap-2">
+                        {dday && (
+                          <span className={`text-xs ${dday.color}`}>{dday.text}</span>
+                        )}
+                        <Badge variant={task.status === "COMPLETED" ? "secondary" : "outline"} className="text-xs">
+                          {statusLabels[task.status]}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                      <span>{task.assignee.name}</span>
+                      <span>•</span>
+                      <span>{priorityLabels[task.priority]}</span>
+                    </div>
+                    {task.description && (
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{task.description}</p>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDateDialogOpen(false)}>
+              닫기
+            </Button>
+            <Button onClick={handleAddFromDateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              일정 추가
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Add Task Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>새 일정 추가</DialogTitle>
@@ -415,8 +586,8 @@ export default function AllCalendarPage() {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setIsDialogOpen(false);
-                  setSelectedDate(null);
+                  setIsAddDialogOpen(false);
+                  resetForm();
                 }}
               >
                 취소
@@ -431,6 +602,128 @@ export default function AllCalendarPage() {
                   "추가"
                 )}
               </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>일정 수정</DialogTitle>
+            <DialogDescription>
+              일정 정보를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateTask} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-assignee">담당자 *</Label>
+              <Select value={assigneeId} onValueChange={setAssigneeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="담당자 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">제목 *</Label>
+              <Input
+                id="edit-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="업무 제목"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">설명</Label>
+              <Textarea
+                id="edit-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="업무 설명"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-status">상태</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TODO">할 일</SelectItem>
+                    <SelectItem value="IN_PROGRESS">진행</SelectItem>
+                    <SelectItem value="REVIEW">검토</SelectItem>
+                    <SelectItem value="COMPLETED">완료</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-priority">긴급성</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">낮음</SelectItem>
+                    <SelectItem value="NORMAL">보통</SelectItem>
+                    <SelectItem value="HIGH">높음</SelectItem>
+                    <SelectItem value="URGENT">긴급</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-deadline">데드라인</Label>
+              <Input
+                id="edit-deadline"
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </div>
+            <DialogFooter className="flex justify-between">
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleDeleteTask}
+                disabled={isSubmitting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                삭제
+              </Button>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingTask(null);
+                    resetForm();
+                  }}
+                >
+                  취소
+                </Button>
+                <Button type="submit" disabled={isSubmitting || !title || !assigneeId}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      저장 중...
+                    </>
+                  ) : (
+                    "저장"
+                  )}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>

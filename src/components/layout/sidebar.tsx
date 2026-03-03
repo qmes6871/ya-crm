@@ -15,13 +15,11 @@ import {
   TrendingUp,
   Settings,
   ChevronDown,
-  Calendar,
-  Users,
-  Trash2,
   Wrench,
   Clock,
+  Server,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MenuItem {
   title: string;
@@ -52,9 +50,14 @@ const menuItems: MenuItem[] = [
     icon: <FolderKanban className="h-5 w-5" />,
   },
   {
-    title: "오픈 프로젝트(유지보수)",
+    title: "오픈 프로젝트",
     href: "/crm/projects/maintenance",
     icon: <Wrench className="h-5 w-5" />,
+  },
+  {
+    title: "서버 리스트",
+    href: "/crm/servers",
+    icon: <Server className="h-5 w-5" />,
   },
   {
     title: "가망고객",
@@ -119,6 +122,17 @@ const menuItems: MenuItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  // 현재 경로에 해당하는 서브메뉴 자동 열기
+  useEffect(() => {
+    const activeMenus = menuItems
+      .filter((item) => item.submenu?.some((sub) => pathname === sub.href || pathname.startsWith(sub.href + "/")))
+      .map((item) => item.title);
+
+    if (activeMenus.length > 0) {
+      setOpenMenus((prev) => [...new Set([...prev, ...activeMenus])]);
+    }
+  }, [pathname]);
 
   const toggleMenu = (title: string) => {
     setOpenMenus((prev) =>

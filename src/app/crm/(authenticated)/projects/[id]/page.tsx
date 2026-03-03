@@ -58,6 +58,9 @@ async function getProject(id: string) {
         orderBy: { createdAt: "desc" },
       },
       payments: true,
+      servers: {
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 

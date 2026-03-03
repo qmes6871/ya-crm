@@ -12,14 +12,22 @@ const defaultSchedules: { stage: ProjectStatus; stageName: string }[] = [
   { stage: "OPEN", stageName: "오픈" },
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const statusParam = searchParams.get("status");
+
+    const where = statusParam
+      ? { status: { in: statusParam.split(",") as ProjectStatus[] } }
+      : {};
+
     const projects = await prisma.project.findMany({
+      where,
       include: {
         client: {
           select: { id: true, name: true },
@@ -49,7 +57,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { clientId, name, description, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom, payments } = body;
+    const { clientId, managerId, name, description, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom, payments } = body;
 
     if (!clientId || !name || !deadline) {
       return NextResponse.json(
@@ -61,7 +69,7 @@ export async function POST(request: Request) {
     const project = await prisma.project.create({
       data: {
         clientId,
-        managerId: session.user.id,
+        managerId: managerId || session.user.id,
         name,
         description,
         deadline: new Date(deadline),

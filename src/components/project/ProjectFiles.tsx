@@ -11,9 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FolderOpen, Upload, Loader2, Download, Eye, Trash2, FileText, Image, File } from "lucide-react";
+import { FolderOpen, Upload, Loader2, Download, Eye, Trash2, FileText, Image, File, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { WordPreview } from "@/components/documents/word-preview";
 
 interface ProjectFile {
   id: string;
@@ -98,12 +99,28 @@ export function ProjectFiles({ project }: ProjectFilesProps) {
     if (!mimeType) return <File className="h-5 w-5 text-gray-400" />;
     if (mimeType.startsWith("image/")) return <Image className="h-5 w-5 text-blue-500" />;
     if (mimeType.includes("pdf")) return <FileText className="h-5 w-5 text-red-500" />;
+    if (mimeType.includes("word") || mimeType.includes("document")) return <FileText className="h-5 w-5 text-blue-600" />;
+    if (mimeType.includes("sheet") || mimeType.includes("excel")) return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
+    if (mimeType.includes("presentation") || mimeType.includes("powerpoint")) return <FileText className="h-5 w-5 text-orange-500" />;
     return <FileText className="h-5 w-5 text-gray-400" />;
   };
 
   const isPreviewable = (mimeType: string | null) => {
     if (!mimeType) return false;
-    return mimeType.startsWith("image/") || mimeType === "application/pdf";
+    return (
+      mimeType.startsWith("image/") ||
+      mimeType === "application/pdf" ||
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mimeType === "application/msword"
+    );
+  };
+
+  const isWordDocument = (mimeType: string | null) => {
+    if (!mimeType) return false;
+    return (
+      mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      mimeType === "application/msword"
+    );
   };
 
   return (
@@ -220,6 +237,11 @@ export function ProjectFiles({ project }: ProjectFilesProps) {
                 <iframe
                   src={`/api/files/${previewFile.id}/preview`}
                   className="w-full h-[70vh]"
+                />
+              ) : isWordDocument(previewFile?.mimeType ?? null) ? (
+                <WordPreview
+                  fileId={previewFile!.id}
+                  fileName={previewFile!.originalName}
                 />
               ) : null}
             </div>
