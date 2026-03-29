@@ -232,7 +232,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                   </TableCell>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/crm/servers/${server.id}`}
+                      href={`/servers/${server.id}`}
                       className="hover:underline"
                     >
                       {server.name}
@@ -240,7 +240,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                   </TableCell>
                   <TableCell>
                     <Link
-                      href={`/crm/projects/${server.project.id}`}
+                      href={`/projects/${server.project.id}`}
                       className="hover:underline"
                     >
                       {server.project.name}
@@ -248,7 +248,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                   </TableCell>
                   <TableCell>
                     <Link
-                      href={`/crm/clients/${server.project.client.id}`}
+                      href={`/clients/${server.project.client.id}`}
                       className="hover:underline"
                     >
                       {server.project.client.name}
@@ -293,7 +293,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                     )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/crm/servers/${server.id}`}>
+                    <Link href={`/servers/${server.id}`}>
                       <Button variant="outline" size="sm">
                         <Eye className="mr-1 h-4 w-4" />
                         상세

@@ -20,6 +20,7 @@ interface Quote {
   validUntil?: string | null;
   totalAmount: number;
   note?: string | null;
+  notices?: string | null;
   status: string;
   createdAt: string;
   creator: {
@@ -41,12 +42,12 @@ interface QuotePDFTemplateProps {
 }
 
 const defaultCompanyInfo = {
-  name: "YA Solution",
-  address: "서울특별시 강남구",
-  phone: "02-1234-5678",
-  email: "contact@yasolution.com",
-  businessNumber: "123-45-67890",
-  representative: "홍길동",
+  name: "와이에이솔루션",
+  address: "서울특별시 강서구 마곡중앙 4로 18, 7층",
+  phone: "",
+  email: "qmes6871@gmail.com",
+  businessNumber: "380-32-01610",
+  representative: "신동훈",
 };
 
 const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
@@ -55,12 +56,16 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
       return new Intl.NumberFormat("ko-KR").format(amount);
     };
 
-    const statusLabel: Record<string, string> = {
-      DRAFT: "초안",
-      SENT: "발송됨",
-      ACCEPTED: "승인됨",
-      REJECTED: "거절됨",
-    };
+    const defaultNotices = [
+      "본 견적서의 유효기간은 발행일로부터 7일입니다.",
+      "부가가치세는 별도입니다.",
+      "상기 금액은 협의에 따라 변경될 수 있습니다.",
+      "결제 조건: 계약금 50%, 잔금 50% (프로젝트 완료 후)",
+    ];
+
+    const noticeItems = quote.notices
+      ? quote.notices.split("\n").filter((line: string) => line.trim())
+      : defaultNotices;
 
     return (
       <div
@@ -69,7 +74,6 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
           backgroundColor: "#ffffff",
           padding: "48px",
           width: "210mm",
-          minHeight: "297mm",
           margin: "0 auto",
           fontFamily: "'Noto Sans KR', 'Malgun Gothic', sans-serif",
           color: "#1f2937",
@@ -88,7 +92,6 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
           >
             견 적 서
           </h1>
-          <p style={{ color: "#6b7280", marginTop: "8px" }}>QUOTATION</p>
         </div>
 
         {/* 견적서 정보 */}
@@ -122,21 +125,6 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
                 </span>
               </p>
             )}
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <span
-              style={{
-                display: "inline-block",
-                padding: "4px 12px",
-                fontSize: "14px",
-                fontWeight: "500",
-                borderRadius: "9999px",
-                backgroundColor: "#dbeafe",
-                color: "#1e40af",
-              }}
-            >
-              {statusLabel[quote.status] || quote.status}
-            </span>
           </div>
         </div>
 
@@ -223,13 +211,13 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
                 사업자번호: {companyInfo.businessNumber}
               </p>
               <p style={{ color: "#4b5563", margin: "4px 0" }}>
-                대표자: {companyInfo.representative}
+                책임자: {companyInfo.representative}
               </p>
               <p style={{ color: "#4b5563", margin: "4px 0" }}>
                 주소: {companyInfo.address}
               </p>
               <p style={{ color: "#4b5563", margin: "4px 0" }}>
-                Tel: {companyInfo.phone} | Email: {companyInfo.email}
+                {companyInfo.phone ? `Tel: ${companyInfo.phone} | ` : ""}Email: {companyInfo.email}
               </p>
             </div>
           </div>
@@ -516,16 +504,11 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
               paddingLeft: "20px",
             }}
           >
-            <li style={{ marginBottom: "4px" }}>
-              본 견적서의 유효기간은 발행일로부터 30일입니다.
-            </li>
-            <li style={{ marginBottom: "4px" }}>부가가치세는 별도입니다.</li>
-            <li style={{ marginBottom: "4px" }}>
-              상기 금액은 협의에 따라 변경될 수 있습니다.
-            </li>
-            <li style={{ marginBottom: "4px" }}>
-              결제 조건: 계약금 50%, 잔금 50% (프로젝트 완료 후)
-            </li>
+            {noticeItems.map((item: string, index: number) => (
+              <li key={index} style={{ marginBottom: "4px" }}>
+                {item}
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -539,59 +522,6 @@ const QuotePDFTemplate = forwardRef<HTMLDivElement, QuotePDFTemplateProps>(
           </p>
         </div>
 
-        {/* 서명/날인 영역 */}
-        <div
-          style={{
-            marginTop: "48px",
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
-          <div
-            style={{
-              textAlign: "center",
-              border: "2px solid #d1d5db",
-              padding: "24px",
-              width: "192px",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "14px",
-                color: "#6b7280",
-                marginBottom: "32px",
-                marginTop: 0,
-              }}
-            >
-              공급자 직인
-            </p>
-            <div
-              style={{
-                height: "64px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  color: "#dc2626",
-                  border: "2px solid #dc2626",
-                  borderRadius: "50%",
-                  width: "64px",
-                  height: "64px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                인
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     );
   }

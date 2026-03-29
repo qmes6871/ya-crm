@@ -21,7 +21,7 @@ export function WordPreview({ fileId, fileName }: WordPreviewProps) {
         setError(null);
 
         // 파일 다운로드
-        const response = await fetch(`/api/files/${fileId}/preview`);
+        const response = await fetch(`/crm/api/files/${fileId}/preview`);
         if (!response.ok) throw new Error("Failed to fetch file");
 
         const arrayBuffer = await response.arrayBuffer();

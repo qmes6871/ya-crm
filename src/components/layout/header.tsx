@@ -17,7 +17,8 @@ export function Header() {
   const { data: session } = useSession();
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: "/crm/login" });
+    await signOut({ redirect: false });
+    window.location.href = "/crm/login";
   };
 
   const getInitials = (name: string) => {
@@ -30,8 +31,8 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white px-6">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white px-4 lg:px-6">
+      <div className="flex items-center gap-4 pl-10 lg:pl-0">
         <h1 className="text-lg font-semibold text-gray-900">CRM</h1>
       </div>
       <div className="flex items-center gap-4">

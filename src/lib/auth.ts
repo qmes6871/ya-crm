@@ -42,6 +42,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           role: user.role,
           image: user.avatar,
+          permissions: user.permissions ? {
+            dashboard: user.permissions.dashboard,
+            attendance: user.permissions.attendance,
+            clients: user.permissions.clients,
+            projects: user.permissions.projects,
+            leads: user.permissions.leads,
+            tasks: user.permissions.tasks,
+            documents: user.permissions.documents,
+            accounts: user.permissions.accounts,
+            servers: user.permissions.servers,
+            settlements: user.permissions.settlements,
+            revenue: user.permissions.revenue,
+            obSales: user.permissions.obSales,
+            settings: user.permissions.settings,
+          } : undefined,
         };
       },
     }),
@@ -52,6 +67,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.name = user.name;
+        token.permissions = user.permissions;
       }
       return token;
     },
@@ -60,12 +76,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.name = token.name as string;
+        session.user.permissions = token.permissions as typeof session.user.permissions;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/crm/login",
+    signIn: "/login",
   },
   session: {
     strategy: "jwt",

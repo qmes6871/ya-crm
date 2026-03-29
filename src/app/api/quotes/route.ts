@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { clientName, clientContact, validUntil, note, items, status } = body;
+    const { clientName, clientContact, validUntil, note, notices, items, status } = body;
 
     if (!clientName) {
       return NextResponse.json(
@@ -91,6 +91,7 @@ export async function POST(request: Request) {
         clientContact,
         validUntil: validUntil ? new Date(validUntil) : null,
         note,
+        notices: notices || null,
         totalAmount,
         status: status || "DRAFT",
         items: items?.length

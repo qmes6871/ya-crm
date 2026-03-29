@@ -47,7 +47,7 @@ export function ServerUsageCompact({ serverId, serverType, localPath }: ServerUs
       return;
     }
 
-    fetch(`/api/servers/${serverId}/usage`)
+    fetch(`/crm/api/servers/${serverId}/usage`)
       .then((res) => res.json())
       .then((data) => {
         if (!data.error) {

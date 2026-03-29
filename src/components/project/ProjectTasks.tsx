@@ -80,7 +80,7 @@ export function ProjectTasks({ project, users }: ProjectTasksProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/tasks", {
+      const response = await fetch("/crm/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -111,7 +111,7 @@ export function ProjectTasks({ project, users }: ProjectTasksProps) {
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`/crm/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

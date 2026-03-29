@@ -99,7 +99,7 @@ export function TrashFilesList({ files }: TrashFilesListProps) {
   const handleRestore = async (fileId: string) => {
     setIsProcessing(true);
     try {
-      const response = await fetch(`/api/files/${fileId}/restore`, {
+      const response = await fetch(`/crm/api/files/${fileId}/restore`, {
         method: "POST",
       });
 
@@ -117,7 +117,7 @@ export function TrashFilesList({ files }: TrashFilesListProps) {
   const handlePermanentDelete = async (fileId: string) => {
     setIsProcessing(true);
     try {
-      const response = await fetch(`/api/files/${fileId}/permanent`, {
+      const response = await fetch(`/crm/api/files/${fileId}/permanent`, {
         method: "DELETE",
       });
 
@@ -144,13 +144,13 @@ export function TrashFilesList({ files }: TrashFilesListProps) {
       if (bulkAction === "restore") {
         await Promise.all(
           fileIds.map((id) =>
-            fetch(`/api/files/${id}/restore`, { method: "POST" })
+            fetch(`/crm/api/files/${id}/restore`, { method: "POST" })
           )
         );
       } else if (bulkAction === "delete") {
         await Promise.all(
           fileIds.map((id) =>
-            fetch(`/api/files/${id}/permanent`, { method: "DELETE" })
+            fetch(`/crm/api/files/${id}/permanent`, { method: "DELETE" })
           )
         );
       }
@@ -291,7 +291,7 @@ export function TrashFilesList({ files }: TrashFilesListProps) {
                   <TableCell>
                     {file.project ? (
                       <Link
-                        href={`/crm/projects/${file.project.id}`}
+                        href={`/projects/${file.project.id}`}
                         className="hover:underline"
                       >
                         {file.project.name}

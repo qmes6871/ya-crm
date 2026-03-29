@@ -60,11 +60,11 @@ export function ProjectFilters({ managers, clients }: ProjectFiltersProps) {
 
   const updateFilter = (key: string, value: string | null) => {
     const queryString = createQueryString({ [key]: value });
-    router.push(`/crm/projects${queryString ? `?${queryString}` : ""}`);
+    router.push(`/projects${queryString ? `?${queryString}` : ""}`);
   };
 
   const clearFilters = () => {
-    router.push("/crm/projects");
+    router.push("/projects");
   };
 
   const hasActiveFilters = searchParams.toString().length > 0;

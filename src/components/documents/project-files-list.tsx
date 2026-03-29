@@ -124,7 +124,7 @@ export function ProjectFilesList({ files, projects }: ProjectFilesListProps) {
     if (!confirm(`"${file.originalName}" 파일을 삭제하시겠습니까?\n(휴지통으로 이동됩니다)`)) return;
 
     try {
-      const response = await fetch(`/api/files/${file.id}`, {
+      const response = await fetch(`/crm/api/files/${file.id}`, {
         method: "DELETE",
       });
 
@@ -227,7 +227,7 @@ export function ProjectFilesList({ files, projects }: ProjectFilesListProps) {
               <div className="bg-gray-50 px-4 py-3 border-b flex items-center gap-2">
                 <FolderOpen className="h-4 w-4 text-gray-500" />
                 <Link
-                  href={projectId !== "no-project" ? `/crm/projects/${projectId}` : "#"}
+                  href={projectId !== "no-project" ? `/projects/${projectId}` : "#"}
                   className={projectId !== "no-project" ? "font-medium hover:underline" : "font-medium text-gray-500"}
                 >
                   {group.projectName}

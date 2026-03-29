@@ -45,7 +45,7 @@ export function DashboardAttendance() {
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
-      const response = await fetch(`/api/attendance?year=${year}&month=${month}`);
+      const response = await fetch(`/crm/api/attendance?year=${year}&month=${month}`);
       if (response.ok) {
         const data = await response.json();
         const today = new Date();
@@ -66,7 +66,7 @@ export function DashboardAttendance() {
   const handleCheckIn = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/attendance", {
+      const response = await fetch("/crm/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkIn" }),
@@ -89,7 +89,7 @@ export function DashboardAttendance() {
   const handleCheckOut = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/attendance", {
+      const response = await fetch("/crm/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkOut" }),

@@ -58,11 +58,18 @@ model User {
   // 출퇴근
   attendances   Attendance[]
 
+  // OB영업
+  obLeads       ObLead[]      @relation("ObLeadAssignee")
+  obLeadsCreated ObLead[]     @relation("ObLeadCreator")
+  obCallLogs    ObCallLog[]
+
   @@map("users")
 }
 
 enum UserRole {
   ADMIN
+  DEVELOPER
+  SALES
   USER
 }
 
@@ -72,14 +79,18 @@ model UserPermission {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 메뉴별 접근 권한
+  dashboard     Boolean @default(true)
+  attendance    Boolean @default(true)
   clients       Boolean @default(true)
   projects      Boolean @default(true)
   leads         Boolean @default(true)
   tasks         Boolean @default(true)
   documents     Boolean @default(true)
   accounts      Boolean @default(true)
+  servers       Boolean @default(true)
   settlements   Boolean @default(true)
   revenue       Boolean @default(true)
+  obSales       Boolean @default(true)
   settings      Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -433,6 +444,7 @@ model Quote {
   validUntil   DateTime?                         // 유효기간
   totalAmount  Float       @default(0)           // 총 금액
   note         String?     @db.Text              // 비고
+  notices      String?     @db.Text              // 안내사항 (커스텀)
   status       QuoteStatus @default(DRAFT)
 
   createdAt    DateTime    @default(now())
@@ -638,4 +650,50 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@map("notifications")
+}
+
+// ==================== OB영업 관련 ====================
+
+model ObLead {
+  id          String       @id @default(cuid())
+  phone       String                              // 전화번호
+  customerName String?                            // 고객명
+  customerLink String?                            // 고객 링크
+  memo        String?      @db.Text               // 메모
+  status      ObLeadStatus @default(NEW)          // 현재 상태
+  assignedDate DateTime?                          // 배정일
+  assigneeId  String?                             // 담당자
+  assignee    User?        @relation("ObLeadAssignee", fields: [assigneeId], references: [id])
+  creatorId   String                              // 등록자 (관리자)
+  creator     User         @relation("ObLeadCreator", fields: [creatorId], references: [id])
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  callLogs    ObCallLog[]
+
+  @@map("ob_leads")
+}
+
+enum ObLeadStatus {
+  NEW        // 신규
+  REJECTED   // 거절
+  NO_ANSWER  // 부재
+  CALLBACK   // 재통
+  PROSPECT   // 가망
+  DESIGN     // 시안제작
+  CONTRACT   // 계약
+}
+
+model ObCallLog {
+  id        String       @id @default(cuid())
+  leadId    String
+  lead      ObLead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  callerId  String                                // 통화한 담당자
+  caller    User         @relation(fields: [callerId], references: [id])
+  result    ObLeadStatus                          // 통화 결과
+  note      String?      @db.Text                 // 통화 내용
+  calledAt  DateTime     @default(now())          // 통화 시간
+
+  @@map("ob_call_logs")
 }

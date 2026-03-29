@@ -45,11 +45,11 @@ export function ClientFilters() {
 
   const updateFilter = (key: string, value: string | null) => {
     const queryString = createQueryString({ [key]: value });
-    router.push(`/crm/clients${queryString ? `?${queryString}` : ""}`);
+    router.push(`/clients${queryString ? `?${queryString}` : ""}`);
   };
 
   const clearFilters = () => {
-    router.push("/crm/clients");
+    router.push("/clients");
   };
 
   const hasActiveFilters = searchParams.toString().length > 0;

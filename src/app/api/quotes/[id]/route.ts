@@ -53,7 +53,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { clientName, clientContact, validUntil, note, items, status } = body;
+    const { clientName, clientContact, validUntil, note, notices, items, status } = body;
 
     // 기존 항목 삭제 후 새로 생성
     await prisma.quoteItem.deleteMany({
@@ -74,6 +74,7 @@ export async function PATCH(
         clientContact,
         validUntil: validUntil ? new Date(validUntil) : null,
         note,
+        notices: notices !== undefined ? (notices || null) : undefined,
         totalAmount,
         status,
         items: items?.length

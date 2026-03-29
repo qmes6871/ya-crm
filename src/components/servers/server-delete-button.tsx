@@ -30,13 +30,13 @@ export function ServerDeleteButton({ serverId, serverName, localPath }: ServerDe
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/servers/${serverId}`, {
+      const response = await fetch(`/crm/api/servers/${serverId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
         alert("서버가 삭제되었습니다.");
-        router.push("/crm/servers");
+        router.push("/servers");
       } else {
         const error = await response.json();
         alert(error.error || "서버 삭제에 실패했습니다.");
