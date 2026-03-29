@@ -35,7 +35,7 @@ export function ServerStatusToggle({
 
     setLoading(true);
     try {
-      const response = await fetch(`/crm/api/servers/${serverId}/toggle-status`, {
+      const response = await fetch(`/yacrm/api/servers/${serverId}/toggle-status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),

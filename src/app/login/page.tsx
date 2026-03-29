@@ -32,7 +32,7 @@ export default function LoginPage() {
         setError("이메일 또는 비밀번호가 올바르지 않습니다.");
       } else {
         try {
-          const res = await fetch("/crm/api/me");
+          const res = await fetch("/yacrm/api/me");
           const data = await res.json();
           router.push(data.redirect || "/dashboard");
         } catch {

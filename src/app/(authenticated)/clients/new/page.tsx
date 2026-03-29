@@ -57,7 +57,7 @@ export default function NewClientPage() {
         });
       }
 
-      const response = await fetch("/crm/api/clients", {
+      const response = await fetch("/yacrm/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

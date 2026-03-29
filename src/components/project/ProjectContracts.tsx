@@ -47,7 +47,7 @@ export function ProjectContracts({ project }: ProjectContractsProps) {
         formData.append("files", file);
       });
 
-      const response = await fetch(`/crm/api/projects/${project.id}/contracts`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/contracts`, {
         method: "POST",
         body: formData,
       });
@@ -70,7 +70,7 @@ export function ProjectContracts({ project }: ProjectContractsProps) {
     if (!confirm("이 계약서를 삭제하시겠습니까?")) return;
 
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}/contracts/${contractId}`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/contracts/${contractId}`, {
         method: "DELETE",
       });
 

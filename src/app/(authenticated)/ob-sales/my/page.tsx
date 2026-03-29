@@ -59,7 +59,7 @@ export default function ObMyPage() {
 
   const fetchLeads = useCallback(async () => {
     try {
-      const res = await fetch("/crm/api/ob-leads?mine=true");
+      const res = await fetch("/yacrm/api/ob-leads?mine=true");
       if (res.ok) setAllLeads(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -132,7 +132,7 @@ export default function ObMyPage() {
     if (!form.result) { alert("통화 결과를 선택해주세요."); return; }
     setSavingId(leadId);
     try {
-      const res = await fetch(`/crm/api/ob-leads/${leadId}`, {
+      const res = await fetch(`/yacrm/api/ob-leads/${leadId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ callLog: { result: form.result, note: form.note } }),
       });

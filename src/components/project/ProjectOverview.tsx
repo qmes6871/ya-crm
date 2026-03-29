@@ -151,7 +151,7 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

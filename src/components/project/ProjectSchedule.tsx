@@ -74,7 +74,7 @@ export function ProjectSchedule({ project }: ProjectScheduleProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}/schedules`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/schedules`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

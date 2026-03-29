@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: "/crm",
+  basePath: "/yacrm",
 
   // Enable server actions
   experimental: {

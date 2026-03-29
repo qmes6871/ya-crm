@@ -146,7 +146,7 @@ export default function UsersSettingsPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/crm/api/users");
+      const res = await fetch("/yacrm/api/users");
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -180,7 +180,7 @@ export default function UsersSettingsPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/crm/api/users", {
+      const res = await fetch("/yacrm/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -250,7 +250,7 @@ export default function UsersSettingsPage() {
         updateData.password = editPassword;
       }
 
-      const res = await fetch(`/crm/api/users/${selectedUser.id}`, {
+      const res = await fetch(`/yacrm/api/users/${selectedUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
@@ -276,7 +276,7 @@ export default function UsersSettingsPage() {
     if (!confirm("이 사용자를 삭제하시겠습니까? 관련된 모든 데이터가 삭제됩니다.")) return;
 
     try {
-      const res = await fetch(`/crm/api/users/${userId}`, {
+      const res = await fetch(`/yacrm/api/users/${userId}`, {
         method: "DELETE",
       });
 

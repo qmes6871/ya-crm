@@ -68,7 +68,7 @@ export default function NewLeadPage() {
     }
 
     // Fetch users for consultant selection
-    fetch("/crm/api/users")
+    fetch("/yacrm/api/users")
       .then((res) => res.json())
       .then((data) => setUsers(data))
       .catch(console.error);
@@ -120,7 +120,7 @@ export default function NewLeadPage() {
           amount: parseFloat(q.amount.replace(/,/g, "")),
         }));
 
-      const response = await fetch("/crm/api/leads", {
+      const response = await fetch("/yacrm/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

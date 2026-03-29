@@ -30,7 +30,7 @@ export function ServerDeleteButton({ serverId, serverName, localPath }: ServerDe
 
     setLoading(true);
     try {
-      const response = await fetch(`/crm/api/servers/${serverId}`, {
+      const response = await fetch(`/yacrm/api/servers/${serverId}`, {
         method: "DELETE",
       });
 

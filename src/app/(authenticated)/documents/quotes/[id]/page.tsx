@@ -83,7 +83,7 @@ export default function QuoteDetailPage() {
 
   const fetchQuote = useCallback(async () => {
     try {
-      const res = await fetch(`/crm/api/quotes/${id}`);
+      const res = await fetch(`/yacrm/api/quotes/${id}`);
       if (res.ok) {
         const data = await res.json();
         setQuote(data);
@@ -157,7 +157,7 @@ export default function QuoteDetailPage() {
     setSaving(true);
 
     try {
-      const res = await fetch(`/crm/api/quotes/${id}`, {
+      const res = await fetch(`/yacrm/api/quotes/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

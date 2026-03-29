@@ -64,7 +64,7 @@ export function ProjectCommunication({ project }: ProjectCommunicationProps) {
         formData.append("files", file);
       });
 
-      const response = await fetch(`/crm/api/projects/${project.id}/comments`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/comments`, {
         method: "POST",
         body: formData,
       });
@@ -86,7 +86,7 @@ export function ProjectCommunication({ project }: ProjectCommunicationProps) {
     if (!confirm("이 코멘트를 삭제하시겠습니까?")) return;
 
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}/comments/${commentId}`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/comments/${commentId}`, {
         method: "DELETE",
       });
 

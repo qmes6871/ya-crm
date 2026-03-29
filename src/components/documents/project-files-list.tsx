@@ -124,7 +124,7 @@ export function ProjectFilesList({ files, projects }: ProjectFilesListProps) {
     if (!confirm(`"${file.originalName}" 파일을 삭제하시겠습니까?\n(휴지통으로 이동됩니다)`)) return;
 
     try {
-      const response = await fetch(`/crm/api/files/${file.id}`, {
+      const response = await fetch(`/yacrm/api/files/${file.id}`, {
         method: "DELETE",
       });
 

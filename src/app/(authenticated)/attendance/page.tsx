@@ -46,7 +46,7 @@ export default function AttendancePage() {
     try {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
-      const response = await fetch(`/crm/api/attendance?year=${year}&month=${month}`);
+      const response = await fetch(`/yacrm/api/attendance?year=${year}&month=${month}`);
       if (response.ok) {
         const data = await response.json();
         setMonthAttendances(data);
@@ -70,7 +70,7 @@ export default function AttendancePage() {
   const handleCheckIn = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/crm/api/attendance", {
+      const response = await fetch("/yacrm/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkIn" }),
@@ -94,7 +94,7 @@ export default function AttendancePage() {
   const handleCheckOut = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/crm/api/attendance", {
+      const response = await fetch("/yacrm/api/attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "checkOut" }),

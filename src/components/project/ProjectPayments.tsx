@@ -75,7 +75,7 @@ export function ProjectPayments({ project }: ProjectPaymentsProps) {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}/payments`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/payments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

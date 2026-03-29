@@ -92,7 +92,7 @@ export default function AttendanceManagementPage() {
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth() + 1;
       const dateParam = selectedDate ? `&date=${format(selectedDate, "yyyy-MM-dd")}` : "";
-      const response = await fetch(`/crm/api/attendance/all?year=${year}&month=${month}${dateParam}`);
+      const response = await fetch(`/yacrm/api/attendance/all?year=${year}&month=${month}${dateParam}`);
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users);
@@ -169,7 +169,7 @@ export default function AttendanceManagementPage() {
 
       if (editingAttendance) {
         // 기존 기록 수정
-        const response = await fetch(`/crm/api/attendance/${editingAttendance.id}`, {
+        const response = await fetch(`/yacrm/api/attendance/${editingAttendance.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -185,7 +185,7 @@ export default function AttendanceManagementPage() {
         }
       } else {
         // 새 기록 생성 (관리자가 직접 추가하는 경우)
-        const response = await fetch("/crm/api/attendance/admin", {
+        const response = await fetch("/yacrm/api/attendance/admin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -224,7 +224,7 @@ export default function AttendanceManagementPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/crm/api/attendance/${deletingAttendance.id}`, {
+      const response = await fetch(`/yacrm/api/attendance/${deletingAttendance.id}`, {
         method: "DELETE",
       });
 

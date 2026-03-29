@@ -105,7 +105,7 @@ export default function AllCalendarPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch("/crm/api/tasks");
+      const res = await fetch("/yacrm/api/tasks");
       if (res.ok) {
         const data = await res.json();
         setTasks(data);
@@ -119,7 +119,7 @@ export default function AllCalendarPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/crm/api/users");
+      const res = await fetch("/yacrm/api/users");
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
@@ -137,7 +137,7 @@ export default function AllCalendarPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/crm/api/tasks", {
+      const res = await fetch("/yacrm/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -167,7 +167,7 @@ export default function AllCalendarPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`/crm/api/tasks/${editingTask.id}`, {
+      const res = await fetch(`/yacrm/api/tasks/${editingTask.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -199,7 +199,7 @@ export default function AllCalendarPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/crm/api/tasks/${editingTask.id}`, {
+      const res = await fetch(`/yacrm/api/tasks/${editingTask.id}`, {
         method: "DELETE",
       });
 

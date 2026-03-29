@@ -52,7 +52,7 @@ export default function EditClientPage({
   useEffect(() => {
     async function fetchClient() {
       try {
-        const response = await fetch(`/crm/api/clients/${id}`);
+        const response = await fetch(`/yacrm/api/clients/${id}`);
         if (response.ok) {
           const client: Client = await response.json();
           setName(client.name);
@@ -103,7 +103,7 @@ export default function EditClientPage({
         });
       }
 
-      const response = await fetch(`/crm/api/clients/${id}`, {
+      const response = await fetch(`/yacrm/api/clients/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

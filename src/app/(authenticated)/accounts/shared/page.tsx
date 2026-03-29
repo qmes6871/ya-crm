@@ -60,7 +60,7 @@ export default function SharedAccountsPage() {
 
   const fetchAccounts = async () => {
     try {
-      const response = await fetch("/crm/api/accounts?type=shared");
+      const response = await fetch("/yacrm/api/accounts?type=shared");
       if (response.ok) {
         const data = await response.json();
         setAccounts(data);

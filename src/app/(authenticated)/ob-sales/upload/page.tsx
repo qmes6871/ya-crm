@@ -78,7 +78,7 @@ export default function ObUploadPage() {
       if (filterAssignee !== "all") params.set("assigneeId", filterAssignee);
       if (filterStatus !== "all") params.set("status", filterStatus);
       if (filterDate) params.set("date", filterDate);
-      const res = await fetch(`/crm/api/ob-leads?${params}`);
+      const res = await fetch(`/yacrm/api/ob-leads?${params}`);
       if (res.ok) setLeads(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -92,7 +92,7 @@ export default function ObUploadPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/crm/api/users");
+      const res = await fetch("/yacrm/api/users");
       if (res.ok) { const d = await res.json(); setUsers(d.map((u: User) => ({ id: u.id, name: u.name }))); }
     } catch (e) { console.error(e); }
   };
@@ -101,7 +101,7 @@ export default function ObUploadPage() {
     if (!addForm.phone.trim()) { alert("전화번호를 입력해주세요."); return; }
     setAddLoading(true);
     try {
-      const res = await fetch("/crm/api/ob-leads", {
+      const res = await fetch("/yacrm/api/ob-leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone: addForm.phone, customerName: addForm.customerName, customerLink: addForm.customerLink, memo: addForm.memo, assigneeId: addForm.assigneeId || null, assignedDate: addForm.assignedDate || null }),
       });
@@ -136,7 +136,7 @@ export default function ObUploadPage() {
     if (bulkPreview.length === 0) { alert("업로드할 데이터가 없습니다."); return; }
     setBulkLoading(true);
     try {
-      const res = await fetch("/crm/api/ob-leads", {
+      const res = await fetch("/yacrm/api/ob-leads", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leads: bulkPreview.map((r) => ({ ...r, assigneeId: bulkAssigneeId || null, assignedDate: bulkDate || null })) }),
       });
@@ -148,7 +148,7 @@ export default function ObUploadPage() {
     if (!assignUserId) { alert("담당자를 선택해주세요."); return; }
     setAssignLoading(true);
     try {
-      const res = await fetch(`/crm/api/ob-leads/${assignLeadId}`, {
+      const res = await fetch(`/yacrm/api/ob-leads/${assignLeadId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assigneeId: assignUserId }),
       });
@@ -158,7 +158,7 @@ export default function ObUploadPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("삭제하시겠습니까?")) return;
-    try { await fetch(`/crm/api/ob-leads/${id}`, { method: "DELETE" }); fetchLeads(); } catch (e) { console.error(e); }
+    try { await fetch(`/yacrm/api/ob-leads/${id}`, { method: "DELETE" }); fetchLeads(); } catch (e) { console.error(e); }
   };
 
   const handleSelectedDelete = async () => {
@@ -166,7 +166,7 @@ export default function ObUploadPage() {
     if (!confirm(`선택한 ${selectedIds.size}건을 삭제하시겠습니까?`)) return;
     setDeleting(true);
     try {
-      await Promise.all(Array.from(selectedIds).map((id) => fetch(`/crm/api/ob-leads/${id}`, { method: "DELETE" })));
+      await Promise.all(Array.from(selectedIds).map((id) => fetch(`/yacrm/api/ob-leads/${id}`, { method: "DELETE" })));
       setSelectedIds(new Set());
       fetchLeads();
     } catch (e) { console.error(e); }
@@ -178,7 +178,7 @@ export default function ObUploadPage() {
     if (!confirm(`전체 ${leads.length}건을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
     setDeleting(true);
     try {
-      await Promise.all(leads.map((l) => fetch(`/crm/api/ob-leads/${l.id}`, { method: "DELETE" })));
+      await Promise.all(leads.map((l) => fetch(`/yacrm/api/ob-leads/${l.id}`, { method: "DELETE" })));
       setSelectedIds(new Set());
       fetchLeads();
     } catch (e) { console.error(e); }

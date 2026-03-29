@@ -139,8 +139,8 @@ export default function LeadDetailPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/crm/api/leads/${id}`).then((res) => res.json()),
-      fetch("/crm/api/users").then((res) => res.json()),
+      fetch(`/yacrm/api/leads/${id}`).then((res) => res.json()),
+      fetch("/yacrm/api/users").then((res) => res.json()),
     ])
       .then(([leadData, usersData]) => {
         setLead(leadData);
@@ -223,7 +223,7 @@ export default function LeadDetailPage() {
           amount: parseFloat(q.amount.replace(/,/g, "")),
         }));
 
-      const response = await fetch(`/crm/api/leads/${id}`, {
+      const response = await fetch(`/yacrm/api/leads/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -258,7 +258,7 @@ export default function LeadDetailPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/crm/api/leads/${id}`, {
+      const response = await fetch(`/yacrm/api/leads/${id}`, {
         method: "DELETE",
       });
 

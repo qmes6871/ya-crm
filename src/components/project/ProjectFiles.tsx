@@ -53,7 +53,7 @@ export function ProjectFiles({ project }: ProjectFilesProps) {
         formData.append("files", file);
       });
 
-      const response = await fetch(`/crm/api/projects/${project.id}/files`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/files`, {
         method: "POST",
         body: formData,
       });
@@ -76,7 +76,7 @@ export function ProjectFiles({ project }: ProjectFilesProps) {
     if (!confirm("이 파일을 삭제하시겠습니까? (휴지통으로 이동됩니다)")) return;
 
     try {
-      const response = await fetch(`/crm/api/projects/${project.id}/files/${fileId}`, {
+      const response = await fetch(`/yacrm/api/projects/${project.id}/files/${fileId}`, {
         method: "DELETE",
       });
 

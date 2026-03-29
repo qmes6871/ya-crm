@@ -87,7 +87,7 @@ export default function PersonalTasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch("/crm/api/tasks?personal=true");
+      const res = await fetch("/yacrm/api/tasks?personal=true");
       if (res.ok) {
         const data = await res.json();
         setTasks(data);
@@ -101,7 +101,7 @@ export default function PersonalTasksPage() {
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch("/crm/api/projects");
+      const res = await fetch("/yacrm/api/projects");
       if (res.ok) {
         const data = await res.json();
         setProjects(data);
@@ -116,7 +116,7 @@ export default function PersonalTasksPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/crm/api/tasks", {
+      const res = await fetch("/yacrm/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -161,7 +161,7 @@ export default function PersonalTasksPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`/crm/api/tasks/${selectedTask.id}`, {
+      const res = await fetch(`/yacrm/api/tasks/${selectedTask.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -190,7 +190,7 @@ export default function PersonalTasksPage() {
     if (!confirm("이 업무를 삭제하시겠습니까?")) return;
 
     try {
-      const res = await fetch(`/crm/api/tasks/${taskId}`, {
+      const res = await fetch(`/yacrm/api/tasks/${taskId}`, {
         method: "DELETE",
       });
 
@@ -204,7 +204,7 @@ export default function PersonalTasksPage() {
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
     try {
-      const res = await fetch(`/crm/api/tasks/${taskId}`, {
+      const res = await fetch(`/yacrm/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

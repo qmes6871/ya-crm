@@ -62,7 +62,7 @@ export default function ObDashboardPage() {
 
   const fetchLeads = async () => {
     try {
-      const res = await fetch("/crm/api/ob-leads");
+      const res = await fetch("/yacrm/api/ob-leads");
       if (res.ok) setLeads(await res.json());
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -70,7 +70,7 @@ export default function ObDashboardPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/crm/api/users");
+      const res = await fetch("/yacrm/api/users");
       if (res.ok) { const d = await res.json(); setUsers(d.map((u: User) => ({ id: u.id, name: u.name }))); }
     } catch (e) { console.error(e); }
   };
@@ -84,7 +84,7 @@ export default function ObDashboardPage() {
     if (!form.result) { alert("통화 결과를 선택해주세요."); return; }
     setSavingId(leadId);
     try {
-      const res = await fetch(`/crm/api/ob-leads/${leadId}`, {
+      const res = await fetch(`/yacrm/api/ob-leads/${leadId}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ callLog: { result: form.result, note: form.note } }),
       });

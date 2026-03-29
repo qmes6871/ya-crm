@@ -88,7 +88,7 @@ export default function NewServerPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/crm/api/projects");
+      const response = await fetch("/yacrm/api/projects");
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
@@ -100,7 +100,7 @@ export default function NewServerPage() {
 
   const fetchLocalFolders = async () => {
     try {
-      const response = await fetch("/crm/api/servers/folders");
+      const response = await fetch("/yacrm/api/servers/folders");
       if (response.ok) {
         const data = await response.json();
         setLocalFolders(data);
@@ -115,7 +115,7 @@ export default function NewServerPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/crm/api/servers", {
+      const response = await fetch("/yacrm/api/servers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

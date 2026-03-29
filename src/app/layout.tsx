@@ -28,7 +28,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider basePath="/crm/api/auth">
+        <SessionProvider basePath="/yacrm/api/auth">
           {children}
         </SessionProvider>
       </body>

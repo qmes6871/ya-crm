@@ -92,7 +92,7 @@ export default function MyAccountsPage() {
 
   const fetchAccounts = async () => {
     try {
-      const response = await fetch("/crm/api/accounts?type=my");
+      const response = await fetch("/yacrm/api/accounts?type=my");
       if (response.ok) {
         const data = await response.json();
         setAccounts(data);
@@ -172,7 +172,7 @@ export default function MyAccountsPage() {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
     try {
-      const response = await fetch(`/crm/api/accounts/${id}`, {
+      const response = await fetch(`/yacrm/api/accounts/${id}`, {
         method: "DELETE",
       });
 

@@ -75,7 +75,7 @@ export default function NewQuotePage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/crm/api/quotes", {
+      const res = await fetch("/yacrm/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

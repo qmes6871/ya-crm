@@ -93,7 +93,7 @@ export default function NewProjectPage() {
   useEffect(() => {
     async function fetchClients() {
       try {
-        const response = await fetch("/crm/api/clients");
+        const response = await fetch("/yacrm/api/clients");
         if (response.ok) {
           const data = await response.json();
           setClients(data);
@@ -110,7 +110,7 @@ export default function NewProjectPage() {
   useEffect(() => {
     async function fetchUsers() {
       try {
-        const response = await fetch("/crm/api/users");
+        const response = await fetch("/yacrm/api/users");
         if (response.ok) {
           const data = await response.json();
           const activeUsers = data.filter((user: User & { isActive: boolean }) => user.isActive);
@@ -187,7 +187,7 @@ export default function NewProjectPage() {
           amount: parseFloat(p.amount.replace(/,/g, "")),
         }));
 
-      const response = await fetch("/crm/api/projects", {
+      const response = await fetch("/yacrm/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -215,7 +215,7 @@ export default function NewProjectPage() {
           formData.append("files", file);
         });
 
-        await fetch(`/crm/api/projects/${project.id}/files`, {
+        await fetch(`/yacrm/api/projects/${project.id}/files`, {
           method: "POST",
           body: formData,
         });

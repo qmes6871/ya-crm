@@ -92,7 +92,7 @@ export default function EditServerPage() {
 
   const fetchServer = async () => {
     try {
-      const response = await fetch(`/crm/api/servers/${id}`);
+      const response = await fetch(`/yacrm/api/servers/${id}`);
       if (response.ok) {
         const server = await response.json();
         setFormData({
@@ -138,7 +138,7 @@ export default function EditServerPage() {
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch("/crm/api/projects");
+      const response = await fetch("/yacrm/api/projects");
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
@@ -150,7 +150,7 @@ export default function EditServerPage() {
 
   const fetchLocalFolders = async () => {
     try {
-      const response = await fetch("/crm/api/servers/folders");
+      const response = await fetch("/yacrm/api/servers/folders");
       if (response.ok) {
         const data = await response.json();
         setLocalFolders(data);
@@ -165,7 +165,7 @@ export default function EditServerPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/crm/api/servers/${id}`, {
+      const response = await fetch(`/yacrm/api/servers/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

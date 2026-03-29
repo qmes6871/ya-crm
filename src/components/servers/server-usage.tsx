@@ -56,7 +56,7 @@ export function ServerUsage({ serverId }: { serverId: string }) {
 
   const fetchUsage = async () => {
     try {
-      const response = await fetch(`/crm/api/servers/${serverId}/usage`);
+      const response = await fetch(`/yacrm/api/servers/${serverId}/usage`);
       if (response.ok) {
         const data = await response.json();
         setUsage(data);
@@ -77,7 +77,7 @@ export function ServerUsage({ serverId }: { serverId: string }) {
 
     setResetting(true);
     try {
-      const response = await fetch(`/crm/api/servers/${serverId}/reset-traffic`, {
+      const response = await fetch(`/yacrm/api/servers/${serverId}/reset-traffic`, {
         method: "POST",
       });
       if (response.ok) {

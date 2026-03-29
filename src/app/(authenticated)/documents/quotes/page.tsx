@@ -69,7 +69,7 @@ export default function QuotesPage() {
 
   const fetchQuotes = async () => {
     try {
-      const res = await fetch("/crm/api/quotes");
+      const res = await fetch("/yacrm/api/quotes");
       if (res.ok) {
         const data = await res.json();
         setQuotes(data);
@@ -89,7 +89,7 @@ export default function QuotesPage() {
     if (!deleteId) return;
 
     try {
-      const res = await fetch(`/crm/api/quotes/${deleteId}`, {
+      const res = await fetch(`/yacrm/api/quotes/${deleteId}`, {
         method: "DELETE",
       });
       if (res.ok) {

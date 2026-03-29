@@ -18,7 +18,7 @@ export function Header() {
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    window.location.href = "/crm/login";
+    window.location.href = "/yacrm/login";
   };
 
   const getInitials = (name: string) => {
