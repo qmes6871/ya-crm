@@ -58,6 +58,23 @@ function formatCurrency(amount: number) {
   return new Intl.NumberFormat("ko-KR").format(amount) + "원";
 }
 
+// 정산 주기: 토요일 ~ 금요일
+function getSettlementWeek(baseDate: Date): { start: Date; end: Date } {
+  const d = new Date(baseDate);
+  const day = d.getDay(); // 0=일, 1=월, ..., 5=금, 6=토
+  // 이번 주 토요일 찾기: 토(6)이면 당일, 일(0)이면 -1, 월(1)이면 -2, ..., 금(5)이면 -6
+  const diffToSat = day === 6 ? 0 : -(day + 1);
+  const start = new Date(d);
+  start.setDate(d.getDate() + diffToSat);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6); // 금요일
+  return { start, end };
+}
+
+function formatDateStr(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function SettlementDashboardPage() {
   const { data: session } = useSession();
   const [settlement, setSettlement] = useState<Settlement | null>(null);
@@ -66,18 +83,28 @@ export default function SettlementDashboardPage() {
   const [noIncentive, setNoIncentive] = useState(false);
 
   const [startDate, setStartDate] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+    const { start } = getSettlementWeek(new Date());
+    return formatDateStr(start);
   });
   const [endDate, setEndDate] = useState(() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
+    const { end } = getSettlementWeek(new Date());
+    return formatDateStr(end);
   });
 
-  const setQuickRange = (type: "thisMonth" | "lastMonth" | "thisYear") => {
+  const setQuickRange = (type: "thisWeek" | "lastWeek" | "thisMonth" | "lastMonth" | "thisYear") => {
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
-    if (type === "thisMonth") {
+    if (type === "thisWeek") {
+      const { start, end } = getSettlementWeek(now);
+      setStartDate(formatDateStr(start));
+      setEndDate(formatDateStr(end));
+    } else if (type === "lastWeek") {
+      const lastWeek = new Date(now);
+      lastWeek.setDate(now.getDate() - 7);
+      const { start, end } = getSettlementWeek(lastWeek);
+      setStartDate(formatDateStr(start));
+      setEndDate(formatDateStr(end));
+    } else if (type === "thisMonth") {
       setStartDate(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`);
       setEndDate(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate())}`);
     } else if (type === "lastMonth") {
@@ -140,7 +167,7 @@ export default function SettlementDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">내 정산 대시보드</h1>
-        <p className="text-gray-500">내 프로젝트별 정산 현황을 확인합니다.</p>
+        <p className="text-gray-500">주간 정산 (토요일 ~ 금요일) 기준으로 정산 현황을 확인합니다.</p>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -148,6 +175,8 @@ export default function SettlementDashboardPage() {
         <span className="text-gray-400">~</span>
         <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-[160px]" />
         <div className="flex gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => setQuickRange("thisWeek")}>이번 주</Button>
+          <Button variant="outline" size="sm" onClick={() => setQuickRange("lastWeek")}>지난 주</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisMonth")}>이번 달</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("lastMonth")}>지난 달</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisYear")}>올해</Button>
