@@ -38,7 +38,7 @@ export function DeleteButton({
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
-      const response = await fetch(`${endpoint}/${id}`, {
+      const response = await fetch(`/yacrm${endpoint}/${id}`, {
         method: "DELETE",
       });
 

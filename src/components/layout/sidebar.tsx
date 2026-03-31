@@ -124,7 +124,7 @@ const menuItems: MenuItem[] = [
     permissionKey: "settlements",
     submenu: [
       { title: "내 정산 대시보드", href: "/settlements/dashboard" },
-      { title: "정산금 관리", href: "/settlements/manage" },
+      { title: "정산금 관리 (관리자)", href: "/settlements/manage", adminOnly: true },
     ],
   },
   {

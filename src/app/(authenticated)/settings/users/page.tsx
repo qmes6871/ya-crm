@@ -29,6 +29,7 @@ interface UserPermission {
 }
 
 interface UserIncentive {
+  revenueRate: number;
   advanceRate: number;
   midPaymentRate: number;
   balanceRate: number;
@@ -118,6 +119,7 @@ export default function UsersSettingsPage() {
   const [permissions, setPermissions] = useState<UserPermission>(defaultPermissions);
   const [enableIncentive, setEnableIncentive] = useState(false);
   const [incentives, setIncentives] = useState<UserIncentive>({
+    revenueRate: 0,
     advanceRate: 0,
     midPaymentRate: 0,
     balanceRate: 0,
@@ -134,6 +136,7 @@ export default function UsersSettingsPage() {
   const [editPermissions, setEditPermissions] = useState<UserPermission>(defaultPermissions);
   const [editEnableIncentive, setEditEnableIncentive] = useState(false);
   const [editIncentives, setEditIncentives] = useState<UserIncentive>({
+    revenueRate: 0,
     advanceRate: 0,
     midPaymentRate: 0,
     balanceRate: 0,
@@ -168,6 +171,7 @@ export default function UsersSettingsPage() {
     setPermissions(defaultPermissions);
     setEnableIncentive(false);
     setIncentives({
+      revenueRate: 0,
       advanceRate: 0,
       midPaymentRate: 0,
       balanceRate: 0,
@@ -222,6 +226,7 @@ export default function UsersSettingsPage() {
     setEditPermissions(user.permissions || defaultPermissions);
     setEditEnableIncentive(!!user.incentives);
     setEditIncentives(user.incentives || {
+      revenueRate: 0,
       advanceRate: 0,
       midPaymentRate: 0,
       balanceRate: 0,
@@ -421,51 +426,25 @@ export default function UsersSettingsPage() {
                     checked={enableIncentive}
                     onCheckedChange={(checked) => setEnableIncentive(checked as boolean)}
                   />
-                  <Label htmlFor="enableIncentive" className="cursor-pointer">인센티브 설정</Label>
+                  <Label htmlFor="enableIncentive" className="cursor-pointer">순익 설정</Label>
                 </div>
                 {enableIncentive && (
                   <div className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
                     <div className="space-y-2">
-                      <Label htmlFor="advanceRate">선수금 비율 (%)</Label>
+                      <Label htmlFor="revenueRate">매출 비율 (%)</Label>
                       <Input
-                        id="advanceRate"
+                        id="revenueRate"
                         type="number"
                         min="0"
                         max="100"
-                        value={incentives.advanceRate}
+                        value={incentives.revenueRate}
                         onChange={(e) =>
-                          setIncentives({ ...incentives, advanceRate: parseFloat(e.target.value) || 0 })
+                          setIncentives({ ...incentives, revenueRate: parseFloat(e.target.value) || 0 })
                         }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="midPaymentRate">중도금 비율 (%)</Label>
-                      <Input
-                        id="midPaymentRate"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={incentives.midPaymentRate}
-                        onChange={(e) =>
-                          setIncentives({ ...incentives, midPaymentRate: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="balanceRate">잔금 비율 (%)</Label>
-                      <Input
-                        id="balanceRate"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={incentives.balanceRate}
-                        onChange={(e) =>
-                          setIncentives({ ...incentives, balanceRate: parseFloat(e.target.value) || 0 })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fullPaymentRate">전체지급 비율 (%)</Label>
+                      <Label htmlFor="fullPaymentRate">순익 비율 (%)</Label>
                       <Input
                         id="fullPaymentRate"
                         type="number"
@@ -527,7 +506,7 @@ export default function UsersSettingsPage() {
                 <TableHead>연락처</TableHead>
                 <TableHead>역할</TableHead>
                 <TableHead>상태</TableHead>
-                <TableHead>인센티브</TableHead>
+                <TableHead>순익</TableHead>
                 <TableHead className="text-right">관리</TableHead>
               </TableRow>
             </TableHeader>
@@ -550,8 +529,7 @@ export default function UsersSettingsPage() {
                   <TableCell>
                     {user.incentives ? (
                       <span className="text-sm text-gray-500">
-                        선수금 {user.incentives.advanceRate}% /
-                        잔금 {user.incentives.balanceRate}%
+                        매출 {user.incentives.revenueRate}% / 순익 {user.incentives.fullPaymentRate}%
                       </span>
                     ) : (
                       "-"
@@ -691,51 +669,25 @@ export default function UsersSettingsPage() {
                   checked={editEnableIncentive}
                   onCheckedChange={(checked) => setEditEnableIncentive(checked as boolean)}
                 />
-                <Label htmlFor="editEnableIncentive" className="cursor-pointer">인센티브 설정</Label>
+                <Label htmlFor="editEnableIncentive" className="cursor-pointer">순익 설정</Label>
               </div>
               {editEnableIncentive && (
                 <div className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
                   <div className="space-y-2">
-                    <Label htmlFor="editAdvanceRate">선수금 비율 (%)</Label>
+                    <Label htmlFor="editRevenueRate">매출 비율 (%)</Label>
                     <Input
-                      id="editAdvanceRate"
+                      id="editRevenueRate"
                       type="number"
                       min="0"
                       max="100"
-                      value={editIncentives.advanceRate}
+                      value={editIncentives.revenueRate}
                       onChange={(e) =>
-                        setEditIncentives({ ...editIncentives, advanceRate: parseFloat(e.target.value) || 0 })
+                        setEditIncentives({ ...editIncentives, revenueRate: parseFloat(e.target.value) || 0 })
                       }
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="editMidPaymentRate">중도금 비율 (%)</Label>
-                    <Input
-                      id="editMidPaymentRate"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editIncentives.midPaymentRate}
-                      onChange={(e) =>
-                        setEditIncentives({ ...editIncentives, midPaymentRate: parseFloat(e.target.value) || 0 })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editBalanceRate">잔금 비율 (%)</Label>
-                    <Input
-                      id="editBalanceRate"
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={editIncentives.balanceRate}
-                      onChange={(e) =>
-                        setEditIncentives({ ...editIncentives, balanceRate: parseFloat(e.target.value) || 0 })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="editFullPaymentRate">전체지급 비율 (%)</Label>
+                    <Label htmlFor="editFullPaymentRate">순익 비율 (%)</Label>
                     <Input
                       id="editFullPaymentRate"
                       type="number"

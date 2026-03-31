@@ -297,6 +297,24 @@ export async function DELETE(
         data: { userId: targetUserId },
       });
 
+      // Reassign OB call logs to target user
+      await tx.obCallLog.updateMany({
+        where: { callerId: id },
+        data: { callerId: targetUserId },
+      });
+
+      // Reassign OB leads (assignee) to target user
+      await tx.obLead.updateMany({
+        where: { assigneeId: id },
+        data: { assigneeId: targetUserId },
+      });
+
+      // Reassign OB leads (creator) to target user
+      await tx.obLead.updateMany({
+        where: { creatorId: id },
+        data: { creatorId: targetUserId },
+      });
+
       // Delete notifications (these are user-specific, no need to reassign)
       await tx.notification.deleteMany({
         where: { userId: id },

@@ -104,11 +104,12 @@ model UserIncentive {
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 매출 유형별 인센티브 비율 (%)
-  advanceRate     Float    @default(0)   // 선수금
-  midPaymentRate  Float    @default(0)   // 중도금
-  balanceRate     Float    @default(0)   // 잔금
-  fullPaymentRate Float    @default(0)   // 전체지급
+  // 인센티브 비율 (%)
+  revenueRate     Float    @default(0)   // 매출 비율
+  advanceRate     Float    @default(0)   // 선수금 (미사용)
+  midPaymentRate  Float    @default(0)   // 중도금 (미사용)
+  balanceRate     Float    @default(0)   // 잔금 (미사용)
+  fullPaymentRate Float    @default(0)   // 전체지급 비율
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -220,7 +221,6 @@ model Project {
   comments    ProjectComment[]
   files       File[]
   contracts   ProjectContract[]
-  settlements Settlement[]
   revenues    Revenue[]
   payments    ProjectPayment[]
   servers     Server[]
@@ -501,13 +501,10 @@ model Settlement {
   id          String      @id @default(cuid())
   userId      String
   user        User        @relation(fields: [userId], references: [id])
-  projectId   String?
-  project     Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  type        PaymentType
-  baseAmount  Float                              // 기준 금액
-  rate        Float                              // 인센티브 비율 (%)
+  category    String      @default("BONUS")      // BONUS, ALLOWANCE, DEDUCTION, OTHER
   amount      Float                              // 정산 금액
   description String?
+  targetDate  DateTime?                          // 정산 대상 날짜
   isPaid      Boolean     @default(false)
   paidAt      DateTime?
 
@@ -539,10 +536,27 @@ model Expense {
   description String?
   paidAt      DateTime?
 
+  attachments ExpenseAttachment[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@map("expenses")
+}
+
+model ExpenseAttachment {
+  id           String  @id @default(cuid())
+  expenseId    String
+  expense      Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String?
+
+  createdAt    DateTime @default(now())
+
+  @@map("expense_attachments")
 }
 
 // ==================== 계정관리 관련 ====================
