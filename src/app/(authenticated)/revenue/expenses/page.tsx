@@ -160,8 +160,8 @@ export default function ExpensesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.category || !form.amount) {
-      alert("카테고리와 금액은 필수입니다.");
+    if (!form.category || !form.amount || !form.paidAt) {
+      alert("카테고리, 금액, 지급일은 필수입니다.");
       return;
     }
     setSaving(true);
@@ -369,7 +369,7 @@ export default function ExpensesPage() {
               />
             </div>
             <div>
-              <Label>지급일</Label>
+              <Label>지급일 *</Label>
               <Input
                 type="date"
                 value={form.paidAt}

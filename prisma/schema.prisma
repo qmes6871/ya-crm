@@ -47,6 +47,7 @@ model User {
 
   // 정산
   settlements   Settlement[]
+  cashAdvances  CashAdvance[]
 
   // 계정 관리
   managedAccounts ManagedAccount[]
@@ -512,6 +513,34 @@ model Settlement {
   updatedAt   DateTime    @updatedAt
 
   @@map("settlements")
+}
+
+model CashAdvance {
+  id                String            @id @default(cuid())
+  userId            String
+  user              User              @relation(fields: [userId], references: [id])
+  amount            Float
+  reason            String?
+  status            CashAdvanceStatus @default(PENDING)
+  periodStart       DateTime
+  periodEnd         DateTime
+  settlementSnapshot Float            // 신청 시점 정산금 스냅샷
+  approvedBy        String?
+  approvedAt        DateTime?
+  paidAt            DateTime?
+  rejectedReason    String?
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@map("cash_advances")
+}
+
+enum CashAdvanceStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PAID
 }
 
 model Revenue {

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, TrendingUp, DollarSign, Loader2 } from "lucide-react";
+import { Calculator, TrendingUp, DollarSign, Loader2, ChevronDown, ChevronUp, Wallet } from "lucide-react";
 import { format } from "date-fns";
 
 const paymentTypeLabels: Record<string, string> = {
@@ -26,6 +26,29 @@ interface Revenue {
   project: { id: string; name: string; client: { name: string } | null } | null;
 }
 
+interface RevenueIncentiveDetail {
+  name: string;
+  rate: number;
+  amount: number;
+}
+
+interface SettlementSummary {
+  companyRevenue: number;
+  companyExpense: number;
+  totalRevenueIncentives: number;
+  revenueIncentiveDetails: RevenueIncentiveDetail[];
+  totalManualSettlements: number;
+  companyNetProfit: number;
+}
+
+interface ExpenseItem {
+  id: string;
+  category: string;
+  amount: number;
+  description: string | null;
+  paidAt: string | null;
+}
+
 interface Settlement {
   user: { id: string; name: string; email: string };
   revenueRate: number;
@@ -36,6 +59,7 @@ interface Settlement {
   profitSettlement: number;
   totalSettlement: number;
   revenues: Revenue[];
+  expenses: ExpenseItem[];
 }
 
 interface ManualSettlement {
@@ -78,17 +102,22 @@ function formatDateStr(d: Date) {
 export default function SettlementDashboardPage() {
   const { data: session } = useSession();
   const [settlement, setSettlement] = useState<Settlement | null>(null);
+  const [summary, setSummary] = useState<SettlementSummary | null>(null);
   const [manualSettlements, setManualSettlements] = useState<ManualSettlement[]>([]);
   const [loading, setLoading] = useState(true);
   const [noIncentive, setNoIncentive] = useState(false);
+  const [showRevenueDetail, setShowRevenueDetail] = useState(false);
+  const [showExpenseDetail, setShowExpenseDetail] = useState(false);
+  const [showIncentiveDetail, setShowIncentiveDetail] = useState(false);
+  const [totalAdvance, setTotalAdvance] = useState(0);
 
   const [startDate, setStartDate] = useState(() => {
-    const { start } = getSettlementWeek(new Date());
-    return formatDateStr(start);
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
   });
   const [endDate, setEndDate] = useState(() => {
-    const { end } = getSettlementWeek(new Date());
-    return formatDateStr(end);
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
   });
 
   const setQuickRange = (type: "thisWeek" | "lastWeek" | "thisMonth" | "lastMonth" | "thisYear") => {
@@ -127,14 +156,23 @@ export default function SettlementDashboardPage() {
       if (endDate) params.set("endDate", endDate);
       params.set("userId", session.user.id);
 
-      const [autoRes, manualRes] = await Promise.all([
+      const [autoRes, manualRes, advanceRes] = await Promise.all([
         fetch(`/yacrm/api/settlements?${params}`),
         fetch(`/yacrm/api/settlements/manual?${params}`),
+        fetch(`/yacrm/api/cash-advances`),
       ]);
 
       let hasAuto = false;
       if (autoRes.ok) {
         const data = await autoRes.json();
+        setSummary({
+          companyRevenue: data.companyRevenue,
+          companyExpense: data.companyExpense,
+          totalRevenueIncentives: data.totalRevenueIncentives,
+          revenueIncentiveDetails: data.revenueIncentiveDetails || [],
+          totalManualSettlements: data.totalManualSettlements,
+          companyNetProfit: data.companyNetProfit,
+        });
         if (data.settlements.length > 0) {
           setSettlement(data.settlements[0]);
           hasAuto = true;
@@ -152,6 +190,20 @@ export default function SettlementDashboardPage() {
       } else if (!hasAuto) {
         setNoIncentive(true);
       }
+
+      // 해당 기간 가불 합계 (거절 제외)
+      if (advanceRes.ok) {
+        const advList = await advanceRes.json();
+        const periodAdvances = advList.filter((a: { status: string; periodStart: string; periodEnd: string }) =>
+          a.status !== "REJECTED" &&
+          a.periodStart.slice(0, 10) === startDate &&
+          a.periodEnd.slice(0, 10) === endDate
+        );
+        const advTotal = periodAdvances.reduce((sum: number, a: { amount: number }) => sum + a.amount, 0);
+        setTotalAdvance(advTotal);
+      } else {
+        setTotalAdvance(0);
+      }
     } catch (error) {
       console.error("Error fetching settlement:", error);
     } finally {
@@ -167,7 +219,6 @@ export default function SettlementDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">내 정산 대시보드</h1>
-        <p className="text-gray-500">주간 정산 (토요일 ~ 금요일) 기준으로 정산 현황을 확인합니다.</p>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -187,6 +238,7 @@ export default function SettlementDashboardPage() {
         const manualTotal = manualSettlements.reduce((sum, m) => sum + m.amount, 0);
         const autoTotal = settlement?.totalSettlement || 0;
         const grandTotal = autoTotal + manualTotal;
+        const finalTotal = grandTotal - totalAdvance;
         const hasData = settlement || manualSettlements.length > 0;
 
         if (loading) return (
@@ -253,7 +305,176 @@ export default function SettlementDashboardPage() {
                   <div className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</div>
                 </CardContent>
               </Card>
+              {totalAdvance > 0 && (
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">가불 차감</CardTitle>
+                    <Wallet className="h-4 w-4 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">- {formatCurrency(totalAdvance)}</div>
+                  </CardContent>
+                </Card>
+              )}
+              {totalAdvance > 0 && (
+                <Card className="border-2 border-primary">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">최종 정산금</CardTitle>
+                    <Calculator className="h-4 w-4 text-primary" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className={`text-2xl font-bold ${finalTotal >= 0 ? "text-primary" : "text-red-600"}`}>{formatCurrency(finalTotal)}</div>
+                    <p className="text-xs text-gray-500 mt-1">총 정산금 - 가불액</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
+            {/* 순익 계산 과정 */}
+            {settlement && settlement.fullPaymentRate > 0 && summary && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>순익 계산 과정</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1 text-sm">
+                    {/* 매출 */}
+                    <button
+                      type="button"
+                      className="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setShowRevenueDetail(!showRevenueDetail)}
+                    >
+                      <span className="text-gray-600 flex items-center gap-1">
+                        회사 총 매출
+                        {showRevenueDetail ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </span>
+                      <span className="font-medium">{formatCurrency(summary.companyRevenue)}</span>
+                    </button>
+                    {showRevenueDetail && settlement.revenues.length > 0 && (
+                      <div className="ml-4 mb-2 border-l-2 border-green-200 pl-3">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs py-1">날짜</TableHead>
+                              <TableHead className="text-xs py-1">프로젝트</TableHead>
+                              <TableHead className="text-xs py-1">거래처</TableHead>
+                              <TableHead className="text-xs py-1">유형</TableHead>
+                              <TableHead className="text-xs py-1 text-right">금액</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {settlement.revenues.map((r) => (
+                              <TableRow key={r.id}>
+                                <TableCell className="text-xs py-1">{r.receivedAt ? format(new Date(r.receivedAt), "yyyy-MM-dd") : "-"}</TableCell>
+                                <TableCell className="text-xs py-1">{r.project?.name || "-"}</TableCell>
+                                <TableCell className="text-xs py-1">{r.project?.client?.name || "-"}</TableCell>
+                                <TableCell className="text-xs py-1">{paymentTypeLabels[r.type] || r.type}</TableCell>
+                                <TableCell className="text-xs py-1 text-right font-medium">{formatCurrency(r.amount)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+
+                    {/* 매입 */}
+                    <button
+                      type="button"
+                      className="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setShowExpenseDetail(!showExpenseDetail)}
+                    >
+                      <span className="text-gray-600 flex items-center gap-1">
+                        (-) 회사 총 매입
+                        {showExpenseDetail ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </span>
+                      <span className="font-medium text-red-600">- {formatCurrency(summary.companyExpense)}</span>
+                    </button>
+                    {showExpenseDetail && settlement.expenses.length > 0 && (
+                      <div className="ml-4 mb-2 border-l-2 border-red-200 pl-3">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-xs py-1">날짜</TableHead>
+                              <TableHead className="text-xs py-1">카테고리</TableHead>
+                              <TableHead className="text-xs py-1">설명</TableHead>
+                              <TableHead className="text-xs py-1 text-right">금액</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {settlement.expenses.map((e) => (
+                              <TableRow key={e.id}>
+                                <TableCell className="text-xs py-1">{e.paidAt ? format(new Date(e.paidAt), "yyyy-MM-dd") : "-"}</TableCell>
+                                <TableCell className="text-xs py-1">{e.category}</TableCell>
+                                <TableCell className="text-xs py-1">{e.description || "-"}</TableCell>
+                                <TableCell className="text-xs py-1 text-right font-medium">{formatCurrency(e.amount)}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+
+                    {/* 매출 인센티브 */}
+                    {summary.totalRevenueIncentives > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          className="w-full flex justify-between items-center py-2 px-2 rounded hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setShowIncentiveDetail(!showIncentiveDetail)}
+                        >
+                          <span className="text-gray-600 flex items-center gap-1">
+                            (-) 매출 인센티브
+                            {showIncentiveDetail ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </span>
+                          <span className="font-medium text-red-600">- {formatCurrency(summary.totalRevenueIncentives)}</span>
+                        </button>
+                        {showIncentiveDetail && summary.revenueIncentiveDetails.length > 0 && (
+                          <div className="ml-4 mb-2 border-l-2 border-orange-200 pl-3">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead className="text-xs py-1">이름</TableHead>
+                                  <TableHead className="text-xs py-1">비율</TableHead>
+                                  <TableHead className="text-xs py-1 text-right">금액</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {summary.revenueIncentiveDetails.map((d) => (
+                                  <TableRow key={d.name}>
+                                    <TableCell className="text-xs py-1">{d.name}</TableCell>
+                                    <TableCell className="text-xs py-1">매출 {d.rate}%</TableCell>
+                                    <TableCell className="text-xs py-1 text-right font-medium">{formatCurrency(d.amount)}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* 추가 정산금 */}
+                    {summary.totalManualSettlements > 0 && (
+                      <div className="flex justify-between py-2 px-2">
+                        <span className="text-gray-600">(-) 추가 정산금</span>
+                        <span className="font-medium text-red-600">- {formatCurrency(summary.totalManualSettlements)}</span>
+                      </div>
+                    )}
+
+                    <div className="border-t pt-3 flex justify-between px-2">
+                      <span className="font-semibold text-gray-900">회사 순익</span>
+                      <span className={`font-bold ${summary.companyNetProfit >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                        {formatCurrency(summary.companyNetProfit)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 bg-blue-50 rounded-lg px-3">
+                      <span className="text-gray-700">내 순익 정산 ({settlement.fullPaymentRate}%)</span>
+                      <span className="font-bold text-blue-600">{formatCurrency(settlement.profitSettlement)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Manual settlement details */}
             {manualSettlements.length > 0 && (
@@ -292,44 +513,6 @@ export default function SettlementDashboardPage() {
               </Card>
             )}
 
-            {/* Revenue details */}
-            {settlement && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>매출 상세 내역</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {settlement.revenues.length === 0 ? (
-                    <p className="text-center text-gray-400 py-8">해당 기간의 매출 내역이 없습니다.</p>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>날짜</TableHead>
-                          <TableHead>프로젝트</TableHead>
-                          <TableHead>거래처</TableHead>
-                          <TableHead>유형</TableHead>
-                          <TableHead className="text-right">금액</TableHead>
-                          <TableHead className="text-right">설명</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {settlement.revenues.map((r) => (
-                          <TableRow key={r.id}>
-                            <TableCell>{r.receivedAt ? format(new Date(r.receivedAt), "yyyy-MM-dd") : "-"}</TableCell>
-                            <TableCell>{r.project?.name || "-"}</TableCell>
-                            <TableCell>{r.project?.client?.name || "-"}</TableCell>
-                            <TableCell><Badge variant="outline">{paymentTypeLabels[r.type] || r.type}</Badge></TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(r.amount)}</TableCell>
-                            <TableCell className="text-right text-gray-500">{r.description || "-"}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </>
         );
       })()}

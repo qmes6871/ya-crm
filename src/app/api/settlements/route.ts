@@ -32,33 +32,68 @@ export async function GET(request: NextRequest) {
 
     const totalCompanyRevenue = companyRevenue._sum.amount || 0;
     const totalCompanyExpense = companyExpense._sum.amount || 0;
-    const companyNetProfit = totalCompanyRevenue - totalCompanyExpense;
 
-    // Get users with incentive settings
-    const whereUser: Record<string, unknown> = {
-      incentives: { isNot: null },
-    };
-    if (userId) {
-      whereUser.id = userId;
+    // 전체 유저의 인센티브 설정 조회 (순익 차감 계산용)
+    const allUsersWithIncentives = await prisma.user.findMany({
+      where: { incentives: { isNot: null } },
+      include: { incentives: true },
+    });
+
+    // 매출 기반 인센티브 합계 계산 (순익 차감용) - 항상 전체 유저 대상
+    let totalRevenueIncentives = 0;
+    const revenueIncentiveDetails: { name: string; rate: number; amount: number }[] = [];
+    for (const user of allUsersWithIncentives) {
+      if (!user.incentives) continue;
+      const { revenueRate } = user.incentives;
+      if (revenueRate > 0) {
+        const amount = totalCompanyRevenue * (revenueRate / 100);
+        totalRevenueIncentives += amount;
+        revenueIncentiveDetails.push({
+          name: user.name,
+          rate: revenueRate,
+          amount: Math.round(amount),
+        });
+      }
     }
 
-    const users = await prisma.user.findMany({
-      where: whereUser,
-      include: {
-        incentives: true,
-      },
+    // 결과 반환용 유저 필터
+    const users = userId
+      ? allUsersWithIncentives.filter((u) => u.id === userId)
+      : allUsersWithIncentives;
+
+    // 해당 기간 수동 추가 정산금 합계 (순익 차감용 - 본인 제외)
+    const manualSettlementsWhere: Record<string, unknown> = {
+      targetDate: { gte: start, lte: end },
+    };
+    if (userId) {
+      manualSettlementsWhere.userId = { not: userId };
+    }
+    const manualSettlements = await prisma.settlement.aggregate({
+      _sum: { amount: true },
+      where: manualSettlementsWhere,
     });
+    const totalManualSettlements = manualSettlements._sum.amount || 0;
+
+    // 순익 = 총 매출 - 총 매입 - 매출 인센티브 - 수동 정산금(본인 제외)
+    const companyNetProfit = totalCompanyRevenue - totalCompanyExpense - totalRevenueIncentives - totalManualSettlements;
 
     // All revenues in range (for detail display)
-    const allRevenues = await prisma.revenue.findMany({
-      where: { receivedAt: { gte: start, lte: end } },
-      include: {
-        project: {
-          select: { id: true, name: true, client: { select: { name: true } } },
+    const [allRevenues, allExpenses] = await Promise.all([
+      prisma.revenue.findMany({
+        where: { receivedAt: { gte: start, lte: end } },
+        include: {
+          project: {
+            select: { id: true, name: true, client: { select: { name: true } } },
+          },
         },
-      },
-      orderBy: { receivedAt: "desc" },
-    });
+        orderBy: { receivedAt: "desc" },
+      }),
+      prisma.expense.findMany({
+        where: { paidAt: { gte: start, lte: end } },
+        select: { id: true, category: true, amount: true, description: true, paidAt: true },
+        orderBy: { paidAt: "desc" },
+      }),
+    ]);
 
     const results = [];
 
@@ -81,6 +116,7 @@ export async function GET(request: NextRequest) {
         profitSettlement: Math.round(profitSettlement),
         totalSettlement: Math.round(revenueSettlement + profitSettlement),
         revenues: allRevenues,
+        expenses: allExpenses,
       });
     }
 
@@ -89,6 +125,9 @@ export async function GET(request: NextRequest) {
       endDate: end.toISOString(),
       companyRevenue: totalCompanyRevenue,
       companyExpense: totalCompanyExpense,
+      totalRevenueIncentives: Math.round(totalRevenueIncentives),
+      revenueIncentiveDetails,
+      totalManualSettlements: Math.round(totalManualSettlements),
       companyNetProfit: Math.round(companyNetProfit),
       settlements: results,
     });

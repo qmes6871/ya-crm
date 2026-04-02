@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { projectId, type, amount, description, receivedAt } = body;
 
-    if (!type || amount === undefined) {
+    if (!type || amount === undefined || !receivedAt) {
       return NextResponse.json(
-        { error: "유형과 금액은 필수입니다." },
+        { error: "유형, 금액, 입금일은 필수입니다." },
         { status: 400 }
       );
     }

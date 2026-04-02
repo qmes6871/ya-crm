@@ -122,8 +122,8 @@ export default function IncomePage() {
   };
 
   const handleSave = async () => {
-    if (!form.type || !form.amount) {
-      alert("유형과 금액은 필수입니다.");
+    if (!form.type || !form.amount || !form.receivedAt) {
+      alert("유형, 금액, 입금일은 필수입니다.");
       return;
     }
     setSaving(true);
@@ -323,7 +323,7 @@ export default function IncomePage() {
               />
             </div>
             <div>
-              <Label>입금일</Label>
+              <Label>입금일 *</Label>
               <Input
                 type="date"
                 value={form.receivedAt}

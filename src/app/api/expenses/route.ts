@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
     const paidAt = formData.get("paidAt") as string;
     const files = formData.getAll("files") as File[];
 
-    if (!category || !amount) {
+    if (!category || !amount || !paidAt) {
       return NextResponse.json(
-        { error: "카테고리와 금액은 필수입니다." },
+        { error: "카테고리, 금액, 지급일은 필수입니다." },
         { status: 400 }
       );
     }
