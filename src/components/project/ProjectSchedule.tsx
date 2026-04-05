@@ -103,7 +103,7 @@ export function ProjectSchedule({ project }: ProjectScheduleProps) {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/projects/${project.id}/schedules/${selectedSchedule.id}`,
+        `/yacrm/api/projects/${project.id}/schedules/${selectedSchedule.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -133,7 +133,7 @@ export function ProjectSchedule({ project }: ProjectScheduleProps) {
 
     try {
       const response = await fetch(
-        `/api/projects/${project.id}/schedules/${scheduleId}`,
+        `/yacrm/api/projects/${project.id}/schedules/${scheduleId}`,
         { method: "DELETE" }
       );
 
@@ -150,7 +150,7 @@ export function ProjectSchedule({ project }: ProjectScheduleProps) {
     setLoadingScheduleId(schedule.id);
     try {
       const response = await fetch(
-        `/api/projects/${project.id}/schedules/${schedule.id}`,
+        `/yacrm/api/projects/${project.id}/schedules/${schedule.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

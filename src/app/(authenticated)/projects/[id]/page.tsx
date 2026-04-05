@@ -103,7 +103,7 @@ export default async function ProjectDetailPage({
         </div>
         <DeleteButton
           id={project.id}
-          endpoint="/api/projects"
+          endpoint="/yacrm/api/projects"
           redirectPath="/projects"
           itemName={project.name}
           buttonVariant="destructive"

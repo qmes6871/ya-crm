@@ -103,7 +103,7 @@ export function ProjectPayments({ project }: ProjectPaymentsProps) {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `/api/projects/${project.id}/payments/${selectedPayment.id}`,
+        `/yacrm/api/projects/${project.id}/payments/${selectedPayment.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -133,7 +133,7 @@ export function ProjectPayments({ project }: ProjectPaymentsProps) {
 
     try {
       const response = await fetch(
-        `/api/projects/${project.id}/payments/${paymentId}`,
+        `/yacrm/api/projects/${project.id}/payments/${paymentId}`,
         { method: "DELETE" }
       );
 

@@ -277,7 +277,7 @@ export function ProjectFilesList({ files, projects }: ProjectFilesListProps) {
                               <Eye className="h-4 w-4" />
                             </Button>
                           )}
-                          <a href={`/api/files/${file.id}/download`}>
+                          <a href={`/yacrm/api/files/${file.id}/download`}>
                             <Button variant="ghost" size="sm" title="다운로드">
                               <Download className="h-4 w-4" />
                             </Button>
@@ -310,13 +310,13 @@ export function ProjectFilesList({ files, projects }: ProjectFilesListProps) {
           <div className="mt-4 overflow-auto max-h-[70vh]">
             {previewFile?.mimeType?.startsWith("image/") ? (
               <img
-                src={`/api/files/${previewFile.id}/preview`}
+                src={`/yacrm/api/files/${previewFile.id}/preview`}
                 alt={previewFile.originalName}
                 className="max-w-full h-auto"
               />
             ) : previewFile?.mimeType === "application/pdf" ? (
               <iframe
-                src={`/api/files/${previewFile.id}/preview`}
+                src={`/yacrm/api/files/${previewFile.id}/preview`}
                 className="w-full h-[70vh]"
               />
             ) : isWordDocument(previewFile?.mimeType ?? null) ? (

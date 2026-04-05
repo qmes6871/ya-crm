@@ -212,7 +212,7 @@ export function ProjectCommunication({ project }: ProjectCommunicationProps) {
                       {comment.attachments.map((attachment) => (
                         <a
                           key={attachment.id}
-                          href={`/api/files/${attachment.id}/download`}
+                          href={`/yacrm/api/files/${attachment.id}/download`}
                           className="flex items-center gap-2 px-3 py-2 bg-gray-50 border rounded-lg hover:bg-gray-100 text-sm"
                         >
                           <FileText className="h-4 w-4 text-gray-500" />

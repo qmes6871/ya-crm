@@ -169,7 +169,7 @@ export function ProjectContracts({ project }: ProjectContractsProps) {
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
-                      <a href={`/api/contracts/${contract.id}/download`}>
+                      <a href={`/yacrm/api/contracts/${contract.id}/download`}>
                         <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4" />
                         </Button>
@@ -197,13 +197,13 @@ export function ProjectContracts({ project }: ProjectContractsProps) {
             <div className="mt-4 overflow-auto max-h-[70vh]">
               {previewContract?.mimeType?.startsWith("image/") ? (
                 <img
-                  src={`/api/contracts/${previewContract.id}/preview`}
+                  src={`/yacrm/api/contracts/${previewContract.id}/preview`}
                   alt={previewContract.fileName}
                   className="max-w-full h-auto"
                 />
               ) : previewContract?.mimeType === "application/pdf" ? (
                 <iframe
-                  src={`/api/contracts/${previewContract.id}/preview`}
+                  src={`/yacrm/api/contracts/${previewContract.id}/preview`}
                   className="w-full h-[70vh]"
                 />
               ) : null}

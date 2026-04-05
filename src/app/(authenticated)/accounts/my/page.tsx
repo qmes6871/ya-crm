@@ -136,8 +136,8 @@ export default function MyAccountsPage() {
 
     try {
       const url = editingAccount
-        ? `/api/accounts/${editingAccount.id}`
-        : "/api/accounts";
+        ? `/yacrm/api/accounts/${editingAccount.id}`
+        : "/yacrm/api/accounts";
       const method = editingAccount ? "PUT" : "POST";
 
       const response = await fetch(url, {
