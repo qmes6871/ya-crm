@@ -255,7 +255,7 @@ export default function SettlementManagePage() {
     fetchData();
   }, [fetchData]);
 
-  // 해당 기간의 가불 합계 (거절 제외)를 유저별로 계산
+  // 해당 기간의 지급 합계 (거절 제외)를 유저별로 계산
   const advanceByUser = (() => {
     const map = new Map<string, number>();
     for (const adv of cashAdvances) {
@@ -490,7 +490,7 @@ export default function SettlementManagePage() {
                   <TableHead className="text-right">순익 정산</TableHead>
                   <TableHead className="text-right">추가 정산</TableHead>
                   <TableHead className="text-right">총 정산금</TableHead>
-                  <TableHead className="text-right">가불</TableHead>
+                  <TableHead className="text-right">지급</TableHead>
                   <TableHead className="text-right">최종 정산금</TableHead>
                 </TableRow>
               </TableHeader>
@@ -784,7 +784,7 @@ export default function SettlementManagePage() {
                   {totalAdvance > 0 && (
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3">
-                        <CardTitle className="text-xs font-medium">가불 차감</CardTitle>
+                        <CardTitle className="text-xs font-medium">지급 차감</CardTitle>
                         <Wallet className="h-3.5 w-3.5 text-red-500" />
                       </CardHeader>
                       <CardContent className="p-3 pt-0">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-const ADVANCE_LIMIT_RATE = 0.4; // 정산금의 40%
+const ADVANCE_LIMIT_RATE = 1.0; // 정산금의 100%
 
 async function calculateTotalSettlement(userId: string, start: Date, end: Date) {
   const [companyRevenue, companyExpense] = await Promise.all([
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching cash advances:", error);
     return NextResponse.json(
-      { error: "가불 목록을 가져오는데 실패했습니다." },
+      { error: "지급 목록을 가져오는데 실패했습니다." },
       { status: 500 }
     );
   }
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     const maxAdvance = Math.round(totalSettlement * ADVANCE_LIMIT_RATE);
 
-    // 해당 기간 기존 가불 합계 (거절 제외)
+    // 해당 기간 기존 지급 합계 (거절 제외)
     const existingAdvances = await prisma.cashAdvance.aggregate({
       _sum: { amount: true },
       where: {
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     if (parseFloat(amount) > remaining) {
       return NextResponse.json(
-        { error: `가불 한도를 초과했습니다. 가능 금액: ${remaining.toLocaleString()}원 (정산금 ${totalSettlement.toLocaleString()}원의 40%)` },
+        { error: `지급 한도를 초과했습니다. 가능 금액: ${remaining.toLocaleString()}원 (정산금 ${totalSettlement.toLocaleString()}원의 100%)` },
         { status: 400 }
       );
     }
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error creating cash advance:", error);
     return NextResponse.json(
-      { error: "가불 신청에 실패했습니다." },
+      { error: "지급 신청에 실패했습니다." },
       { status: 500 }
     );
   }

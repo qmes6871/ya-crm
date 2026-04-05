@@ -168,8 +168,8 @@ export default function CashAdvanceManagePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">가불 관리</h1>
-        <p className="text-gray-500">직원들의 가불 신청을 관리합니다.</p>
+        <h1 className="text-2xl font-bold text-gray-900">지급 관리</h1>
+        <p className="text-gray-500">직원들의 지급 신청을 관리합니다.</p>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -204,11 +204,11 @@ export default function CashAdvanceManagePage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>가불 신청 목록</CardTitle>
+            <CardTitle>지급 신청 목록</CardTitle>
           </CardHeader>
           <CardContent>
             {advances.length === 0 ? (
-              <p className="text-center text-gray-400 py-8">가불 내역이 없습니다.</p>
+              <p className="text-center text-gray-400 py-8">지급 내역이 없습니다.</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -218,7 +218,7 @@ export default function CashAdvanceManagePage() {
                     <TableHead>정산 기간</TableHead>
                     <TableHead className="text-right">신청 금액</TableHead>
                     <TableHead className="text-right">정산금(신청시)</TableHead>
-                    <TableHead className="text-right">한도(40%)</TableHead>
+                    <TableHead className="text-right">한도(100%)</TableHead>
                     <TableHead>사유</TableHead>
                     <TableHead>상태</TableHead>
                     <TableHead className="w-[180px]">처리</TableHead>
@@ -234,7 +234,7 @@ export default function CashAdvanceManagePage() {
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatCurrency(adv.amount)}</TableCell>
                       <TableCell className="text-right text-gray-500">{formatCurrency(adv.settlementSnapshot)}</TableCell>
-                      <TableCell className="text-right text-gray-500">{formatCurrency(Math.round(adv.settlementSnapshot * 0.4))}</TableCell>
+                      <TableCell className="text-right text-gray-500">{formatCurrency(Math.round(adv.settlementSnapshot * 1.0))}</TableCell>
                       <TableCell className="text-gray-500 max-w-[150px] truncate">{adv.reason || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={statusVariants[adv.status] || "secondary"}>
@@ -284,7 +284,7 @@ export default function CashAdvanceManagePage() {
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>가불 거절</DialogTitle>
+            <DialogTitle>지급 거절</DialogTitle>
           </DialogHeader>
           <div>
             <Label>거절 사유</Label>

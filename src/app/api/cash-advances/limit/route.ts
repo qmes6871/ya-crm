@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
-const ADVANCE_LIMIT_RATE = 0.4;
+const ADVANCE_LIMIT_RATE = 1.0;
 
 async function calculateTotalSettlement(userId: string, start: Date, end: Date) {
   const [companyRevenue, companyExpense] = await Promise.all([
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error calculating advance limit:", error);
     return NextResponse.json(
-      { error: "가불 한도 계산에 실패했습니다." },
+      { error: "지급 한도 계산에 실패했습니다." },
       { status: 500 }
     );
   }

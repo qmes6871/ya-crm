@@ -86,7 +86,7 @@ export default function CashAdvancePage() {
     setLoading(true);
     try {
       const [advRes, limitRes] = await Promise.all([
-        fetch(`/yacrm/api/cash-advances`),
+        fetch(`/yacrm/api/cash-advances?userId=${session.user.id}`),
         fetch(`/yacrm/api/cash-advances/limit?periodStart=${periodStart}&periodEnd=${periodEnd}`),
       ]);
 
@@ -126,17 +126,17 @@ export default function CashAdvancePage() {
         fetchData();
       } else {
         const data = await res.json();
-        alert(data.error || "가불 신청에 실패했습니다.");
+        alert(data.error || "지급 신청에 실패했습니다.");
       }
     } catch {
-      alert("가불 신청에 실패했습니다.");
+      alert("지급 신청에 실패했습니다.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("가불 신청을 취소하시겠습니까?")) return;
+    if (!confirm("지급 신청을 취소하시겠습니까?")) return;
     try {
       const res = await fetch(`/yacrm/api/cash-advances/${id}`, { method: "DELETE" });
       if (res.ok) fetchData();
@@ -166,12 +166,12 @@ export default function CashAdvancePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">내 가불 현황</h1>
-          <p className="text-gray-500">정산금의 40%까지 가불 신청이 가능합니다.</p>
+          <h1 className="text-2xl font-bold text-gray-900">내 지급 현황</h1>
+          <p className="text-gray-500">정산금의 100%까지 지급 신청이 가능합니다.</p>
         </div>
         <Button onClick={() => { setForm({ amount: "", reason: "" }); setDialogOpen(true); }}>
           <Plus className="mr-2 h-4 w-4" />
-          가불 신청
+          지급 신청
         </Button>
       </div>
 
@@ -205,7 +205,7 @@ export default function CashAdvancePage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">가불 한도 (40%)</CardTitle>
+                  <CardTitle className="text-sm font-medium">지급 한도 (100%)</CardTitle>
                   <Wallet className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
@@ -237,11 +237,11 @@ export default function CashAdvancePage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>가불 신청 내역</CardTitle>
+              <CardTitle>지급 신청 내역</CardTitle>
             </CardHeader>
             <CardContent>
               {advances.length === 0 ? (
-                <p className="text-center text-gray-400 py-8">가불 내역이 없습니다.</p>
+                <p className="text-center text-gray-400 py-8">지급 내역이 없습니다.</p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -291,13 +291,13 @@ export default function CashAdvancePage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>가불 신청</DialogTitle>
+            <DialogTitle>지급 신청</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {limitInfo && (
               <div className="bg-blue-50 rounded-lg p-3 text-sm space-y-1">
                 <p>정산금: <span className="font-medium">{formatCurrency(limitInfo.totalSettlement)}</span></p>
-                <p>가불 한도 (40%): <span className="font-medium">{formatCurrency(limitInfo.maxAdvance)}</span></p>
+                <p>지급 한도 (100%): <span className="font-medium">{formatCurrency(limitInfo.maxAdvance)}</span></p>
                 <p>잔여 한도: <span className="font-bold text-blue-600">{formatCurrency(limitInfo.remaining)}</span></p>
               </div>
             )}

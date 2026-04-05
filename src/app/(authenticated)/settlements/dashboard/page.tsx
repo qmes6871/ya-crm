@@ -159,7 +159,7 @@ export default function SettlementDashboardPage() {
       const [autoRes, manualRes, advanceRes] = await Promise.all([
         fetch(`/yacrm/api/settlements?${params}`),
         fetch(`/yacrm/api/settlements/manual?${params}`),
-        fetch(`/yacrm/api/cash-advances`),
+        fetch(`/yacrm/api/cash-advances?${params}`),
       ]);
 
       let hasAuto = false;
@@ -191,7 +191,7 @@ export default function SettlementDashboardPage() {
         setNoIncentive(true);
       }
 
-      // 해당 기간 가불 합계 (거절 제외)
+      // 해당 기간 지급 합계 (거절 제외)
       if (advanceRes.ok) {
         const advList = await advanceRes.json();
         const periodAdvances = advList.filter((a: { status: string; periodStart: string; periodEnd: string }) =>
@@ -308,7 +308,7 @@ export default function SettlementDashboardPage() {
               {totalAdvance > 0 && (
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">가불 차감</CardTitle>
+                    <CardTitle className="text-sm font-medium">지급 차감</CardTitle>
                     <Wallet className="h-4 w-4 text-red-500" />
                   </CardHeader>
                   <CardContent>
@@ -324,7 +324,7 @@ export default function SettlementDashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <div className={`text-2xl font-bold ${finalTotal >= 0 ? "text-primary" : "text-red-600"}`}>{formatCurrency(finalTotal)}</div>
-                    <p className="text-xs text-gray-500 mt-1">총 정산금 - 가불액</p>
+                    <p className="text-xs text-gray-500 mt-1">총 정산금 - 지급액</p>
                   </CardContent>
                 </Card>
               )}

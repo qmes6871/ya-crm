@@ -22,7 +22,7 @@ export async function PATCH(
 
     const existing = await prisma.cashAdvance.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "가불 내역을 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json({ error: "지급 내역을 찾을 수 없습니다." }, { status: 404 });
     }
 
     const data: Record<string, unknown> = { status };
@@ -52,7 +52,7 @@ export async function PATCH(
   } catch (error) {
     console.error("Error updating cash advance:", error);
     return NextResponse.json(
-      { error: "가불 상태 변경에 실패했습니다." },
+      { error: "지급 상태 변경에 실패했습니다." },
       { status: 500 }
     );
   }
@@ -72,15 +72,15 @@ export async function DELETE(
 
     const existing = await prisma.cashAdvance.findUnique({ where: { id } });
     if (!existing) {
-      return NextResponse.json({ error: "가불 내역을 찾을 수 없습니다." }, { status: 404 });
+      return NextResponse.json({ error: "지급 내역을 찾을 수 없습니다." }, { status: 404 });
     }
 
     if (session.user.role === "ADMIN") {
       // 관리자는 모든 상태 삭제 가능
     } else if (existing.userId !== session.user.id) {
-      return NextResponse.json({ error: "본인의 가불만 취소할 수 있습니다." }, { status: 403 });
+      return NextResponse.json({ error: "본인의 지급만 취소할 수 있습니다." }, { status: 403 });
     } else if (existing.status !== "PENDING") {
-      return NextResponse.json({ error: "대기 상태의 가불만 취소할 수 있습니다." }, { status: 400 });
+      return NextResponse.json({ error: "대기 상태의 지급만 취소할 수 있습니다." }, { status: 400 });
     }
 
     await prisma.cashAdvance.delete({ where: { id } });
@@ -89,7 +89,7 @@ export async function DELETE(
   } catch (error) {
     console.error("Error deleting cash advance:", error);
     return NextResponse.json(
-      { error: "가불 취소에 실패했습니다." },
+      { error: "지급 취소에 실패했습니다." },
       { status: 500 }
     );
   }
