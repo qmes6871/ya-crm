@@ -31,20 +31,20 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white px-4 lg:px-6">
-      <div className="flex items-center gap-4 pl-10 lg:pl-0">
-        <h1 className="text-lg font-semibold text-gray-900">CRM</h1>
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-white px-3 sm:h-16 sm:px-4 lg:px-6">
+      <div className="flex items-center gap-2 pl-12 sm:gap-4 sm:pl-10 lg:pl-0">
+        <h1 className="text-base font-semibold text-gray-900 sm:text-lg">CRM</h1>
       </div>
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
+      <div className="flex items-center gap-2 sm:gap-4">
+        <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-10 sm:w-10">
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar className="h-10 w-10">
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full sm:h-10 sm:w-10">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                 <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || ""} />
                 <AvatarFallback className="bg-primary text-white">
                   {session?.user?.name ? getInitials(session.user.name) : "U"}

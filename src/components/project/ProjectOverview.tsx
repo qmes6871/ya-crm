@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, User, Calendar, Edit, Loader2, Clock, Server, ExternalLink, Power, PowerOff } from "lucide-react";
+import { Building2, User, Calendar, Edit, Loader2, Clock, Server, ExternalLink, Power, PowerOff, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -86,6 +86,10 @@ interface ProjectOverviewProps {
     status: string;
     progress: number;
     deadline: Date | null;
+    firstDraftDate: Date | null;
+    firstDraftCompletedAt: Date | null;
+    secondDraftDate: Date | null;
+    secondDraftCompletedAt: Date | null;
     serverCost: string | null;
     serverCostCustom: string | null;
     maintenance: string | null;
@@ -135,6 +139,8 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [completingDraft, setCompletingDraft] = useState<"first" | "second" | null>(null);
   const [formData, setFormData] = useState({
     name: project.name,
     description: project.description || "",
@@ -142,6 +148,8 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
     progress: project.progress,
     managerId: project.manager.id,
     deadline: project.deadline ? format(new Date(project.deadline), "yyyy-MM-dd") : "",
+    firstDraftDate: project.firstDraftDate ? format(new Date(project.firstDraftDate), "yyyy-MM-dd") : "",
+    secondDraftDate: project.secondDraftDate ? format(new Date(project.secondDraftDate), "yyyy-MM-dd") : "",
     serverCost: project.serverCost || "NONE",
     serverCostCustom: project.serverCostCustom || "",
     maintenance: project.maintenance || "NONE",
@@ -156,6 +164,9 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          deadline: formData.deadline || null,
+          firstDraftDate: formData.firstDraftDate || null,
+          secondDraftDate: formData.secondDraftDate || null,
           serverCost: formData.serverCost !== "NONE" ? formData.serverCost : null,
           serverCostCustom: formData.serverCost === "OTHER" ? formData.serverCostCustom : null,
           maintenance: formData.maintenance !== "NONE" ? formData.maintenance : null,
@@ -175,6 +186,80 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
     }
   };
 
+  const handleNormalClose = async () => {
+    if (!confirm("이 프로젝트를 정상마감 처리하시겠습니까?\n상태가 '완료'로 변경되며, 대시보드 마감일 임박 목록에서 제외됩니다.")) {
+      return;
+    }
+    setIsClosing(true);
+    try {
+      const response = await fetch(`/yacrm/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "COMPLETED", progress: 100 }),
+      });
+
+      if (!response.ok) throw new Error("Failed to close project");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error closing project:", error);
+      alert("정상마감 처리에 실패했습니다.");
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
+  const handleDraftComplete = async (which: "first" | "second") => {
+    const label = which === "first" ? "1차 시안" : "2차 시안";
+    if (!confirm(`${label} 공유를 완료 처리하시겠습니까?`)) return;
+
+    setCompletingDraft(which);
+    try {
+      const field = which === "first" ? "firstDraftCompletedAt" : "secondDraftCompletedAt";
+      const response = await fetch(`/yacrm/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: new Date().toISOString() }),
+      });
+
+      if (!response.ok) throw new Error("Failed to complete draft");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error completing draft:", error);
+      alert("공유 완료 처리에 실패했습니다.");
+    } finally {
+      setCompletingDraft(null);
+    }
+  };
+
+  const handleDraftUndo = async (which: "first" | "second") => {
+    const label = which === "first" ? "1차 시안" : "2차 시안";
+    if (!confirm(`${label} 공유 완료를 취소하시겠습니까?`)) return;
+
+    setCompletingDraft(which);
+    try {
+      const field = which === "first" ? "firstDraftCompletedAt" : "secondDraftCompletedAt";
+      const response = await fetch(`/yacrm/api/projects/${project.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [field]: null }),
+      });
+
+      if (!response.ok) throw new Error("Failed to undo");
+
+      router.refresh();
+    } catch (error) {
+      console.error("Error undoing draft:", error);
+      alert("취소 처리에 실패했습니다.");
+    } finally {
+      setCompletingDraft(null);
+    }
+  };
+
+  const isCompleted = project.status === "COMPLETED";
+  const firstDraftDone = !!project.firstDraftCompletedAt;
+  const secondDraftDone = !!project.secondDraftCompletedAt;
   const totalPayment = project.payments.reduce((sum, p) => sum + p.amount, 0);
 
   return (
@@ -299,7 +384,25 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deadline">마감일</Label>
+                  <Label htmlFor="firstDraftDate">1차 시안 공유일</Label>
+                  <Input
+                    id="firstDraftDate"
+                    type="date"
+                    value={formData.firstDraftDate}
+                    onChange={(e) => setFormData({ ...formData, firstDraftDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="secondDraftDate">2차 시안 공유일</Label>
+                  <Input
+                    id="secondDraftDate"
+                    type="date"
+                    value={formData.secondDraftDate}
+                    onChange={(e) => setFormData({ ...formData, secondDraftDate: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deadline">최종 마감일</Label>
                   <Input
                     id="deadline"
                     type="date"
@@ -428,21 +531,41 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
               <span className="text-sm font-medium">{project.manager.name}</span>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">마감일</span>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-gray-400" />
-              {project.deadline ? (
-                <span className={`text-sm font-medium ${
-                  new Date(project.deadline) < new Date() ? "text-red-600" : ""
-                }`}>
-                  {format(new Date(project.deadline), "yyyy년 MM월 dd일", { locale: ko })}
-                </span>
-              ) : (
-                <span className="text-sm text-gray-400">미설정</span>
-              )}
-            </div>
-          </div>
+          <DateRow
+            label="1차 시안 공유일"
+            date={project.firstDraftDate}
+            completed={firstDraftDone}
+            completedAt={project.firstDraftCompletedAt}
+            isProjectCompleted={isCompleted}
+            completedLabel="공유 완료"
+            actionLabel="공유 완료"
+            loading={completingDraft === "first"}
+            onComplete={() => handleDraftComplete("first")}
+            onUndo={() => handleDraftUndo("first")}
+          />
+          <DateRow
+            label="2차 시안 공유일"
+            date={project.secondDraftDate}
+            completed={secondDraftDone}
+            completedAt={project.secondDraftCompletedAt}
+            isProjectCompleted={isCompleted}
+            completedLabel="공유 완료"
+            actionLabel="공유 완료"
+            loading={completingDraft === "second"}
+            onComplete={() => handleDraftComplete("second")}
+            onUndo={() => handleDraftUndo("second")}
+          />
+          <DateRow
+            label="최종 마감일"
+            date={project.deadline}
+            completed={isCompleted}
+            completedAt={null}
+            isProjectCompleted={isCompleted}
+            completedLabel="정상마감"
+            actionLabel="정상마감"
+            loading={isClosing}
+            onComplete={handleNormalClose}
+          />
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">서버비용</span>
             <span className="text-sm font-medium">
@@ -535,6 +658,97 @@ export function ProjectOverview({ project, users }: ProjectOverviewProps) {
           </div>
         </CardContent>
       </Card>
+      </div>
+    </div>
+  );
+}
+
+interface DateRowProps {
+  label: string;
+  date: Date | null;
+  completed: boolean;
+  completedAt: Date | null;
+  isProjectCompleted: boolean;
+  completedLabel: string;
+  actionLabel: string;
+  loading: boolean;
+  onComplete: () => void;
+  onUndo?: () => void;
+}
+
+function DateRow({
+  label,
+  date,
+  completed,
+  completedAt,
+  isProjectCompleted,
+  completedLabel,
+  actionLabel,
+  loading,
+  onComplete,
+  onUndo,
+}: DateRowProps) {
+  const isOverdue = !completed && !isProjectCompleted && date ? new Date(date) < new Date() : false;
+
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-gray-500">{label}</span>
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-gray-400" />
+        {date ? (
+          <span
+            className={`text-sm font-medium ${
+              completed ? "text-emerald-600" : isOverdue ? "text-red-600" : ""
+            }`}
+          >
+            {format(new Date(date), "yyyy년 MM월 dd일", { locale: ko })}
+          </span>
+        ) : (
+          <span className="text-sm text-gray-400">미설정</span>
+        )}
+        {completed ? (
+          <div className="flex items-center gap-1">
+            <Badge className="bg-emerald-100 text-emerald-800 gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              {completedLabel}
+              {completedAt && (
+                <span className="ml-1 font-normal opacity-70">
+                  ({format(new Date(completedAt), "MM.dd", { locale: ko })})
+                </span>
+              )}
+            </Badge>
+            {onUndo && !isProjectCompleted && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-1.5 text-xs text-gray-500 hover:text-gray-700"
+                onClick={onUndo}
+                disabled={loading}
+              >
+                취소
+              </Button>
+            )}
+          </div>
+        ) : (
+          !isProjectCompleted && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              onClick={onComplete}
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  {actionLabel}
+                </>
+              )}
+            </Button>
+          )
+        )}
       </div>
     </div>
   );

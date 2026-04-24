@@ -179,32 +179,32 @@ export default function IncomePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">매출 관리</h1>
-          <p className="text-gray-500">매출을 확인하고 추가합니다.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">매출 관리</h1>
+          <p className="text-sm md:text-base text-gray-500">매출을 확인하고 추가합니다.</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 h-4 w-4" />
-          매출 추가
+        <Button onClick={openCreate} size="sm" className="md:size-default">
+          <Plus className="mr-1 md:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">매출 </span>추가
         </Button>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
         <Input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
-          className="w-[160px]"
+          className="w-[130px] sm:w-[160px] text-sm"
         />
         <span className="text-gray-400">~</span>
         <Input
           type="date"
           value={endDate}
           onChange={(e) => setEndDate(e.target.value)}
-          className="w-[160px]"
+          className="w-[130px] sm:w-[160px] text-sm"
         />
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisMonth")}>이번 달</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("lastMonth")}>지난 달</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisYear")}>올해</Button>
@@ -230,33 +230,33 @@ export default function IncomePage() {
           ) : revenues.length === 0 ? (
             <p className="text-center text-gray-400 py-8">등록된 매출이 없습니다.</p>
           ) : (
-            <Table>
+            <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>날짜</TableHead>
-                  <TableHead>프로젝트</TableHead>
-                  <TableHead>거래처</TableHead>
-                  <TableHead>유형</TableHead>
-                  <TableHead className="text-right">금액</TableHead>
-                  <TableHead className="text-right">설명</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
+                  <TableHead className="text-xs md:text-sm">날짜</TableHead>
+                  <TableHead className="text-xs md:text-sm">프로젝트</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">거래처</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">유형</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right">금액</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right hidden lg:table-cell">설명</TableHead>
+                  <TableHead className="w-[80px] md:w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {revenues.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell>
+                    <TableCell className="text-xs md:text-sm">
                       {r.receivedAt ? format(new Date(r.receivedAt), "yyyy-MM-dd") : "-"}
                     </TableCell>
-                    <TableCell>{r.project?.name || "-"}</TableCell>
-                    <TableCell>{r.project?.client?.name || "-"}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{paymentTypeLabels[r.type] || r.type}</Badge>
+                    <TableCell className="text-xs md:text-sm">{r.project?.name || "-"}</TableCell>
+                    <TableCell className="text-xs md:text-sm hidden md:table-cell">{r.project?.client?.name || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline" className="text-xs">{paymentTypeLabels[r.type] || r.type}</Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-xs md:text-sm text-right font-medium">
                       {formatCurrency(r.amount)}
                     </TableCell>
-                    <TableCell className="text-gray-500 max-w-[200px] truncate text-right">
+                    <TableCell className="text-gray-500 max-w-[120px] md:max-w-[200px] truncate text-right text-xs md:text-sm hidden lg:table-cell">
                       {r.description || "-"}
                     </TableCell>
                     <TableCell>
@@ -272,7 +272,7 @@ export default function IncomePage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </Table></div>
           )}
         </CardContent>
       </Card>

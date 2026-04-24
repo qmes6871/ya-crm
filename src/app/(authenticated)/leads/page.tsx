@@ -67,15 +67,15 @@ export default async function LeadsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">가망고객</h1>
-          <p className="text-gray-500">가망고객을 관리합니다.</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">가망고객</h1>
+          <p className="text-sm md:text-base text-gray-500">가망고객을 관리합니다.</p>
         </div>
         <Link href="/leads/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            가망고객 추가
+          <Button size="sm" className="md:size-default">
+            <Plus className="mr-1 md:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">가망고객 </span>추가
           </Button>
         </Link>
       </div>
@@ -111,20 +111,20 @@ export default async function LeadsPage() {
             <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>고객명</TableHead>
-                  <TableHead>연락처</TableHead>
-                  <TableHead>경로</TableHead>
-                  <TableHead>상담자</TableHead>
-                  <TableHead>상담일</TableHead>
-                  <TableHead>결과</TableHead>
-                  <TableHead className="text-right">견적 금액</TableHead>
-                  <TableHead className="text-right">액션</TableHead>
+                  <TableHead className="text-xs md:text-sm">고객명</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">연락처</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">경로</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden lg:table-cell">상담자</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">상담일</TableHead>
+                  <TableHead className="text-xs md:text-sm">결과</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right">견적 금액</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right">액션</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leadsWithTotals.map((lead) => (
                   <TableRow key={lead.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="text-xs md:text-sm font-medium">
                       <Link
                         href={`/leads/${lead.id}`}
                         className="hover:underline"
@@ -132,11 +132,11 @@ export default async function LeadsPage() {
                         {lead.customerName}
                       </Link>
                     </TableCell>
-                    <TableCell>{lead.contact || "-"}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs md:text-sm hidden md:table-cell">{lead.contact || "-"}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex flex-wrap gap-1">
                         {lead.sources.map((source, idx) => (
-                          <Badge key={idx} variant="outline">
+                          <Badge key={idx} variant="outline" className="text-xs">
                             {source.type === "OTHER"
                               ? source.customType || "기타"
                               : sourceTypeLabels[source.type]}
@@ -144,25 +144,25 @@ export default async function LeadsPage() {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell>{lead.consultant.name}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs md:text-sm hidden lg:table-cell">{lead.consultant.name}</TableCell>
+                    <TableCell className="text-xs md:text-sm hidden md:table-cell">
                       {format(new Date(lead.consultDate), "yyyy.MM.dd", { locale: ko })}
                     </TableCell>
                     <TableCell>
-                      <Badge className={resultColors[lead.result]}>
+                      <Badge className={`text-xs ${resultColors[lead.result]}`}>
                         {lead.result === "OTHER"
                           ? lead.resultNote || "기타"
                           : resultLabels[lead.result]}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-xs md:text-sm text-right font-medium">
                       {lead.totalQuoteAmount > 0 ? formatCurrency(lead.totalQuoteAmount) : "-"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/leads/${lead.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-1 h-4 w-4" />
-                          자세히 보기
+                        <Button variant="outline" size="sm" className="text-xs md:text-sm">
+                          <Eye className="mr-1 h-3 w-3 md:h-4 md:w-4" />
+                          <span className="hidden sm:inline">자세히 </span>보기
                         </Button>
                       </Link>
                     </TableCell>
@@ -171,8 +171,9 @@ export default async function LeadsPage() {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={6} className="font-bold">총 합계</TableCell>
-                  <TableCell className="text-right font-bold">
+                  <TableCell colSpan={2} className="font-bold text-xs md:text-sm md:hidden">총 합계</TableCell>
+                  <TableCell colSpan={6} className="font-bold text-xs md:text-sm hidden md:table-cell">총 합계</TableCell>
+                  <TableCell className="text-right font-bold text-xs md:text-sm">
                     {formatCurrency(grandTotal)}
                   </TableCell>
                   <TableCell></TableCell>

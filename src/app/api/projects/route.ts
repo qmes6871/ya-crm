@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ProjectStatus } from "@prisma/client";
+import { isDemoUser } from "@/lib/demo";
 
 const defaultSchedules: { stage: ProjectStatus; stageName: string }[] = [
   { stage: "PLANNING", stageName: "기획" },
@@ -22,9 +23,13 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const statusParam = searchParams.get("status");
 
+    const demoFilter = isDemoUser(session)
+      ? { id: { startsWith: "demo-proj-" } }
+      : { NOT: { id: { startsWith: "demo-proj-" } } };
+
     const where = statusParam
-      ? { status: { in: statusParam.split(",") as ProjectStatus[] } }
-      : {};
+      ? { ...demoFilter, status: { in: statusParam.split(",") as ProjectStatus[] } }
+      : demoFilter;
 
     const projects = await prisma.project.findMany({
       where,
@@ -57,11 +62,46 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { clientId, managerId, name, description, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom, payments } = body;
+    const {
+      clientId,
+      managerId,
+      name,
+      description,
+      deadline,
+      firstDraftDate,
+      secondDraftDate,
+      serverCost,
+      serverCostCustom,
+      maintenance,
+      maintenanceCustom,
+      instructionPurpose,
+      instructionFeatures,
+      instructionDesign,
+      instructionPages,
+      instructionNotes,
+      payments,
+    } = body;
 
     if (!clientId || !name || !deadline) {
       return NextResponse.json(
         { error: "Client, project name, and deadline are required" },
+        { status: 400 }
+      );
+    }
+
+    const instructionFields = {
+      instructionPurpose,
+      instructionFeatures,
+      instructionDesign,
+      instructionPages,
+      instructionNotes,
+    };
+    const missingInstruction = Object.entries(instructionFields)
+      .filter(([, v]) => !v || !String(v).trim())
+      .map(([k]) => k);
+    if (missingInstruction.length > 0) {
+      return NextResponse.json(
+        { error: "작업지시서의 모든 항목은 필수입니다.", missing: missingInstruction },
         { status: 400 }
       );
     }
@@ -73,10 +113,17 @@ export async function POST(request: Request) {
         name,
         description,
         deadline: new Date(deadline),
+        firstDraftDate: firstDraftDate ? new Date(firstDraftDate) : null,
+        secondDraftDate: secondDraftDate ? new Date(secondDraftDate) : null,
         serverCost,
         serverCostCustom,
         maintenance,
         maintenanceCustom,
+        instructionPurpose,
+        instructionFeatures,
+        instructionDesign,
+        instructionPages,
+        instructionNotes,
         status: "PLANNING",
         progress: 0,
         schedules: {

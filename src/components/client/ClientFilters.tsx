@@ -55,10 +55,10 @@ export function ClientFilters() {
   const hasActiveFilters = searchParams.toString().length > 0;
 
   return (
-    <div className="bg-white border rounded-lg p-4 mb-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="bg-white border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
         <Filter className="h-4 w-4 text-gray-500" />
-        <span className="font-medium text-gray-700">필터</span>
+        <span className="text-sm sm:text-base font-medium text-gray-700">필터</span>
         {hasActiveFilters && (
           <Button
             variant="ghost"

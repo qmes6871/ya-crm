@@ -118,8 +118,8 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
   return (
     <div className="space-y-4">
       {/* 필터 영역 */}
-      <div className="flex flex-wrap gap-3 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3 items-center">
+        <div className="relative col-span-2 sm:flex-1 sm:min-w-[200px] sm:max-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="서버명, 프로젝트, 거래처, 도메인 검색..."
@@ -130,7 +130,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
         </div>
 
         <Select value={serverTypeFilter} onValueChange={setServerTypeFilter}>
-          <SelectTrigger className="w-[150px]">
+          <SelectTrigger className="w-full sm:w-[150px]">
             <SelectValue placeholder="서버 타입" />
           </SelectTrigger>
           <SelectContent>
@@ -144,7 +144,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[120px]">
+          <SelectTrigger className="w-full sm:w-[120px]">
             <SelectValue placeholder="상태" />
           </SelectTrigger>
           <SelectContent>
@@ -155,7 +155,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
         </Select>
 
         <Select value={hostingFilter} onValueChange={setHostingFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full sm:w-[140px]">
             <SelectValue placeholder="호스팅" />
           </SelectTrigger>
           <SelectContent>
@@ -169,7 +169,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
         </Select>
 
         {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9">
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 col-span-2 sm:col-span-1">
             <X className="h-4 w-4 mr-1" />
             필터 초기화
           </Button>
@@ -198,18 +198,18 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
           {hasActiveFilters ? "검색 결과가 없습니다." : "등록된 서버가 없습니다."}
         </div>
       ) : (
-        <Table>
+        <div className="overflow-x-auto"><Table>
           <TableHeader>
             <TableRow>
-              <TableHead>상태</TableHead>
-              <TableHead>서버명</TableHead>
-              <TableHead>프로젝트</TableHead>
-              <TableHead>거래처</TableHead>
-              <TableHead>서버 타입</TableHead>
-              <TableHead>사용량</TableHead>
-              <TableHead>도메인</TableHead>
-              <TableHead>호스팅</TableHead>
-              <TableHead className="text-right">액션</TableHead>
+              <TableHead className="text-xs md:text-sm">상태</TableHead>
+              <TableHead className="text-xs md:text-sm">서버명</TableHead>
+              <TableHead className="text-xs md:text-sm hidden md:table-cell">프로젝트</TableHead>
+              <TableHead className="text-xs md:text-sm hidden lg:table-cell">거래처</TableHead>
+              <TableHead className="text-xs md:text-sm hidden md:table-cell">서버 타입</TableHead>
+              <TableHead className="text-xs md:text-sm hidden lg:table-cell">사용량</TableHead>
+              <TableHead className="text-xs md:text-sm hidden md:table-cell">도메인</TableHead>
+              <TableHead className="text-xs md:text-sm hidden lg:table-cell">호스팅</TableHead>
+              <TableHead className="text-xs md:text-sm text-right">액션</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -225,12 +225,12 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                 <TableRow key={server.id} className={!server.isActive ? "bg-red-50" : ""}>
                   <TableCell>
                     {server.isActive ? (
-                      <Badge className="bg-green-100 text-green-800">활성</Badge>
+                      <Badge className="bg-green-100 text-green-800 text-xs">활성</Badge>
                     ) : (
-                      <Badge className="bg-red-100 text-red-800">중단</Badge>
+                      <Badge className="bg-red-100 text-red-800 text-xs">중단</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="text-xs md:text-sm font-medium">
                     <Link
                       href={`/servers/${server.id}`}
                       className="hover:underline"
@@ -238,7 +238,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                       {server.name}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs md:text-sm hidden md:table-cell">
                     <Link
                       href={`/projects/${server.project.id}`}
                       className="hover:underline"
@@ -246,7 +246,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                       {server.project.name}
                     </Link>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs md:text-sm hidden lg:table-cell">
                     <Link
                       href={`/clients/${server.project.client.id}`}
                       className="hover:underline"
@@ -254,21 +254,21 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                       {server.project.client.name}
                     </Link>
                   </TableCell>
-                  <TableCell>
-                    <Badge className={typeColor}>
+                  <TableCell className="hidden md:table-cell">
+                    <Badge className={`text-xs ${typeColor}`}>
                       {server.serverType === "OTHER"
                         ? server.serverTypeCustom || "기타"
                         : typeInfo?.label || "미설정"}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     <ServerUsageCompact
                       serverId={server.id}
                       serverType={server.serverType}
                       localPath={server.localPath}
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs md:text-sm hidden md:table-cell">
                     {server.domain ? (
                       <a
                         href={server.domain.startsWith("http") ? server.domain : `https://${server.domain}`}
@@ -283,7 +283,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                       <span className="text-gray-400">-</span>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs md:text-sm hidden lg:table-cell">
                     {server.hostingProvider ? (
                       server.hostingProvider === "OTHER"
                         ? server.hostingProviderCustom || "기타"
@@ -294,8 +294,8 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <Link href={`/servers/${server.id}`}>
-                      <Button variant="outline" size="sm">
-                        <Eye className="mr-1 h-4 w-4" />
+                      <Button variant="outline" size="sm" className="text-xs md:text-sm">
+                        <Eye className="mr-1 h-3 w-3 md:h-4 md:w-4" />
                         상세
                       </Button>
                     </Link>
@@ -304,7 +304,7 @@ export function ServerListFilter({ servers }: ServerListFilterProps) {
               );
             })}
           </TableBody>
-        </Table>
+        </Table></div>
       )}
     </div>
   );

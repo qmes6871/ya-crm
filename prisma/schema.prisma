@@ -207,11 +207,22 @@ model Project {
   description String?       @db.Text
   status      ProjectStatus @default(PLANNING)
   progress    Int           @default(0)          // 진행률 (0-100)
-  deadline    DateTime?                          // 프로젝트 마감일
+  deadline    DateTime?                          // 최종 마감일
+  firstDraftDate         DateTime?               // 1차 시안 공유 예정일
+  firstDraftCompletedAt  DateTime?               // 1차 시안 공유 완료 시각
+  secondDraftDate        DateTime?               // 2차 시안 공유 예정일
+  secondDraftCompletedAt DateTime?               // 2차 시안 공유 완료 시각
   serverCost       String?                       // 서버비용 타입
   serverCostCustom String?                       // 서버비용 기타 텍스트
   maintenance      String?                       // 유지보수 타입
   maintenanceCustom String?                      // 유지보수 기타 텍스트
+
+  // 작업지시서
+  instructionPurpose  String? @db.Text           // 목적/배경
+  instructionFeatures String? @db.Text           // 주요 기능
+  instructionDesign   String? @db.Text           // 디자인 참고
+  instructionPages    String? @db.Text           // 페이지 구성
+  instructionNotes    String? @db.Text           // 특이사항
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

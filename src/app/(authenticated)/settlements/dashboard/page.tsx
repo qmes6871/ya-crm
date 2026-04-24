@@ -221,11 +221,11 @@ export default function SettlementDashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900">내 정산 대시보드</h1>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-[160px]" />
+      <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-[130px] sm:w-[160px] text-sm" />
         <span className="text-gray-400">~</span>
-        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-[160px]" />
-        <div className="flex gap-1.5">
+        <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-[130px] sm:w-[160px] text-sm" />
+        <div className="flex flex-wrap gap-1.5">
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisWeek")}>이번 주</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("lastWeek")}>지난 주</Button>
           <Button variant="outline" size="sm" onClick={() => setQuickRange("thisMonth")}>이번 달</Button>
@@ -259,7 +259,7 @@ export default function SettlementDashboardPage() {
 
         return (
           <>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               {settlement && settlement.revenueRate > 0 && (
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -351,7 +351,7 @@ export default function SettlementDashboardPage() {
                       <span className="font-medium">{formatCurrency(summary.companyRevenue)}</span>
                     </button>
                     {showRevenueDetail && settlement.revenues.length > 0 && (
-                      <div className="ml-4 mb-2 border-l-2 border-green-200 pl-3">
+                      <div className="ml-2 md:ml-4 mb-2 border-l-2 border-green-200 pl-2 md:pl-3 overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -390,7 +390,7 @@ export default function SettlementDashboardPage() {
                       <span className="font-medium text-red-600">- {formatCurrency(summary.companyExpense)}</span>
                     </button>
                     {showExpenseDetail && settlement.expenses.length > 0 && (
-                      <div className="ml-4 mb-2 border-l-2 border-red-200 pl-3">
+                      <div className="ml-2 md:ml-4 mb-2 border-l-2 border-red-200 pl-2 md:pl-3 overflow-x-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -429,7 +429,7 @@ export default function SettlementDashboardPage() {
                           <span className="font-medium text-red-600">- {formatCurrency(summary.totalRevenueIncentives)}</span>
                         </button>
                         {showIncentiveDetail && summary.revenueIncentiveDetails.length > 0 && (
-                          <div className="ml-4 mb-2 border-l-2 border-orange-200 pl-3">
+                          <div className="ml-2 md:ml-4 mb-2 border-l-2 border-orange-200 pl-2 md:pl-3 overflow-x-auto">
                             <Table>
                               <TableHeader>
                                 <TableRow>
@@ -483,23 +483,23 @@ export default function SettlementDashboardPage() {
                   <CardTitle>추가 정산 내역</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
+                  <div className="overflow-x-auto"><Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>날짜</TableHead>
-                        <TableHead>구분</TableHead>
-                        <TableHead className="text-right">금액</TableHead>
-                        <TableHead className="text-right">설명</TableHead>
-                        <TableHead>지급</TableHead>
+                        <TableHead className="text-xs md:text-sm">날짜</TableHead>
+                        <TableHead className="text-xs md:text-sm">구분</TableHead>
+                        <TableHead className="text-xs md:text-sm text-right">금액</TableHead>
+                        <TableHead className="text-xs md:text-sm text-right hidden md:table-cell">설명</TableHead>
+                        <TableHead className="text-xs md:text-sm">지급</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {manualSettlements.map((m) => (
                         <TableRow key={m.id}>
-                          <TableCell>{m.targetDate ? format(new Date(m.targetDate), "yyyy-MM-dd") : "-"}</TableCell>
-                          <TableCell><Badge variant="outline">{categoryLabels[m.category] || m.category}</Badge></TableCell>
-                          <TableCell className={`text-right font-medium ${m.amount < 0 ? "text-red-600" : ""}`}>{formatCurrency(m.amount)}</TableCell>
-                          <TableCell className="text-right text-gray-500">{m.description || "-"}</TableCell>
+                          <TableCell className="text-xs md:text-sm">{m.targetDate ? format(new Date(m.targetDate), "yyyy-MM-dd") : "-"}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{categoryLabels[m.category] || m.category}</Badge></TableCell>
+                          <TableCell className={`text-xs md:text-sm text-right font-medium ${m.amount < 0 ? "text-red-600" : ""}`}>{formatCurrency(m.amount)}</TableCell>
+                          <TableCell className="text-right text-gray-500 text-xs md:text-sm hidden md:table-cell">{m.description || "-"}</TableCell>
                           <TableCell>
                             <Badge variant={m.isPaid ? "default" : "secondary"} className="text-xs">
                               {m.isPaid ? "지급완료" : "미지급"}
@@ -508,7 +508,7 @@ export default function SettlementDashboardPage() {
                         </TableRow>
                       ))}
                     </TableBody>
-                  </Table>
+                  </Table></div>
                 </CardContent>
               </Card>
             )}

@@ -140,11 +140,11 @@ export default function QuotesPage() {
             <div className="overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>견적번호</TableHead>
-                  <TableHead>고객명</TableHead>
-                  <TableHead className="text-right">금액</TableHead>
-                  <TableHead>작성일</TableHead>
-                  <TableHead>작성자</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">견적번호</TableHead>
+                  <TableHead className="text-xs md:text-sm">고객명</TableHead>
+                  <TableHead className="text-xs md:text-sm text-right">금액</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden md:table-cell">작성일</TableHead>
+                  <TableHead className="text-xs md:text-sm hidden lg:table-cell">작성자</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -152,19 +152,19 @@ export default function QuotesPage() {
                 {quotes.map((quote) => {
                   return (
                     <TableRow key={quote.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="text-xs md:text-sm font-medium hidden md:table-cell">
                         {quote.quoteNumber}
                       </TableCell>
-                      <TableCell>{quote.clientName}</TableCell>
-                      <TableCell className="text-right font-semibold">
+                      <TableCell className="text-xs md:text-sm">{quote.clientName}</TableCell>
+                      <TableCell className="text-xs md:text-sm text-right font-semibold">
                         {formatCurrency(quote.totalAmount)}원
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-xs md:text-sm hidden md:table-cell">
                         {format(new Date(quote.createdAt), "yyyy.MM.dd", {
                           locale: ko,
                         })}
                       </TableCell>
-                      <TableCell>{quote.creator.name}</TableCell>
+                      <TableCell className="text-xs md:text-sm hidden lg:table-cell">{quote.creator.name}</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

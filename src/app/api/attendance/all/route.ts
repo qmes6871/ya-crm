@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isDemoUser } from "@/lib/demo";
 
 // 한국 시간대 기준 날짜를 UTC Date 객체로 변환
 function getKSTDateAsUTC(year: number, month: number, day: number): Date {
@@ -37,6 +38,11 @@ export async function GET(request: Request) {
     }
 
     // 전체 활성 사용자 조회
+    // 데모 계정은 빈 결과 반환
+    if (isDemoUser(session)) {
+      return NextResponse.json([]);
+    }
+
     const users = await prisma.user.findMany({
       where: { isActive: true },
       select: {

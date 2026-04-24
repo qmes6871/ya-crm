@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ProjectOverview } from "@/components/project/ProjectOverview";
+import { ProjectInstruction } from "@/components/project/ProjectInstruction";
 import { ProjectSchedule } from "@/components/project/ProjectSchedule";
 import { ProjectTasks } from "@/components/project/ProjectTasks";
 import { ProjectCommunication } from "@/components/project/ProjectCommunication";
@@ -88,41 +89,50 @@ export default async function ProjectDetailPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/projects">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <Link href="/projects" className="shrink-0">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-            <p className="text-gray-500">{project.client.name}</p>
+          <div className="min-w-0">
+            <h1 className="text-lg md:text-2xl font-bold text-gray-900 truncate">{project.name}</h1>
+            <p className="text-sm md:text-base text-gray-500 truncate">{project.client.name}</p>
           </div>
         </div>
-        <DeleteButton
-          id={project.id}
-          endpoint="/yacrm/api/projects"
-          redirectPath="/projects"
-          itemName={project.name}
-          buttonVariant="destructive"
-        />
+        <div className="shrink-0">
+          <DeleteButton
+            id={project.id}
+            endpoint="/api/projects"
+            redirectPath="/projects"
+            itemName={project.name}
+            buttonVariant="destructive"
+          />
+        </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="flex w-full overflow-x-auto">
-          <TabsTrigger value="overview">프로젝트 개요</TabsTrigger>
-          <TabsTrigger value="schedule">일정</TabsTrigger>
-          <TabsTrigger value="tasks">업무</TabsTrigger>
-          <TabsTrigger value="communication">커뮤니케이션</TabsTrigger>
-          <TabsTrigger value="files">프로젝트 파일</TabsTrigger>
-          <TabsTrigger value="contracts">계약서</TabsTrigger>
-          <TabsTrigger value="payments">매출</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-full md:w-full">
+            <TabsTrigger value="overview" className="text-xs md:text-sm whitespace-nowrap">개요</TabsTrigger>
+            <TabsTrigger value="instruction" className="text-xs md:text-sm whitespace-nowrap">작업지시서</TabsTrigger>
+            <TabsTrigger value="schedule" className="text-xs md:text-sm whitespace-nowrap">일정</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-xs md:text-sm whitespace-nowrap">업무</TabsTrigger>
+            <TabsTrigger value="communication" className="text-xs md:text-sm whitespace-nowrap">커뮤니케이션</TabsTrigger>
+            <TabsTrigger value="files" className="text-xs md:text-sm whitespace-nowrap">파일</TabsTrigger>
+            <TabsTrigger value="contracts" className="text-xs md:text-sm whitespace-nowrap">계약서</TabsTrigger>
+            <TabsTrigger value="payments" className="text-xs md:text-sm whitespace-nowrap">매출</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview">
           <ProjectOverview project={project} users={users} />
+        </TabsContent>
+
+        <TabsContent value="instruction">
+          <ProjectInstruction project={project} />
         </TabsContent>
 
         <TabsContent value="schedule">

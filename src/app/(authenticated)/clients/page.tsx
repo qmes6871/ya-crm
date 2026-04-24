@@ -165,14 +165,14 @@ export default async function ClientsPage({
   ].filter((v) => v && v !== "all").length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">거래처 관리</h1>
-          <p className="text-gray-500">등록된 거래처를 관리합니다.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">거래처 관리</h1>
+          <p className="text-sm sm:text-base text-gray-500">등록된 거래처를 관리합니다.</p>
         </div>
-        <Link href="/clients/new">
-          <Button>
+        <Link href="/clients/new" className="self-start sm:self-auto">
+          <Button size="sm" className="sm:size-default">
             <Plus className="mr-2 h-4 w-4" />
             거래처 추가
           </Button>
@@ -198,7 +198,7 @@ export default async function ClientsPage({
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
           {filteredClients.length === 0 ? (
             <div className="text-center py-12">
               <Building2 className="mx-auto h-12 w-12 text-gray-400" />
@@ -222,22 +222,22 @@ export default async function ClientsPage({
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto"><Table>
+            <div className="-mx-4 sm:mx-0 overflow-x-auto"><Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>거래처명</TableHead>
-                  <TableHead>연락처</TableHead>
-                  <TableHead>의뢰 유형</TableHead>
-                  <TableHead>계약일</TableHead>
-                  <TableHead>프로젝트</TableHead>
-                  <TableHead className="text-right">합계 금액</TableHead>
-                  <TableHead className="text-right">액션</TableHead>
+                  <TableHead className="whitespace-nowrap">거래처명</TableHead>
+                  <TableHead className="whitespace-nowrap">연락처</TableHead>
+                  <TableHead className="whitespace-nowrap">의뢰 유형</TableHead>
+                  <TableHead className="hidden md:table-cell whitespace-nowrap">계약일</TableHead>
+                  <TableHead className="hidden md:table-cell whitespace-nowrap">프로젝트</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">합계 금액</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">액션</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClients.map((client) => (
                   <TableRow key={client.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium whitespace-nowrap">
                       <Link
                         href={`/clients/${client.id}`}
                         className="hover:underline"
@@ -245,11 +245,11 @@ export default async function ClientsPage({
                         {client.name}
                       </Link>
                     </TableCell>
-                    <TableCell>{client.contact || "-"}</TableCell>
+                    <TableCell className="whitespace-nowrap">{client.contact || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {client.requestTypes.map((rt, idx) => (
-                          <Badge key={idx} variant="secondary">
+                          <Badge key={idx} variant="secondary" className="text-xs">
                             {rt.type === "OTHER"
                               ? rt.customType || "기타"
                               : requestTypeLabels[rt.type]}
@@ -257,26 +257,26 @@ export default async function ClientsPage({
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell whitespace-nowrap">
                       {client.contractDate
                         ? format(new Date(client.contractDate), "yyyy.MM.dd", {
                             locale: ko,
                           })
                         : "-"}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Badge variant="outline">
                         {client.projects.length}개
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium whitespace-nowrap">
                       {client.totalAmount > 0 ? formatCurrency(client.totalAmount) : "-"}
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/clients/${client.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-1 h-4 w-4" />
-                          자세히 보기
+                        <Button variant="outline" size="sm" className="whitespace-nowrap">
+                          <Eye className="h-4 w-4 sm:mr-1" />
+                          <span className="hidden sm:inline">자세히 보기</span>
                         </Button>
                       </Link>
                     </TableCell>
@@ -285,7 +285,15 @@ export default async function ClientsPage({
               </TableBody>
               <TableFooter>
                 <TableRow className="bg-gray-50">
-                  <TableCell colSpan={5} className="text-sm text-gray-600">
+                  <TableCell colSpan={3} className="text-xs sm:text-sm text-gray-600 md:hidden">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                      <span>선수금: <span className="font-medium">{formatCurrency(paymentTotals.advance)}</span></span>
+                      <span>중도금: <span className="font-medium">{formatCurrency(paymentTotals.midPayment)}</span></span>
+                      <span>잔금: <span className="font-medium">{formatCurrency(paymentTotals.balance)}</span></span>
+                      <span>일시지급: <span className="font-medium">{formatCurrency(paymentTotals.fullPayment)}</span></span>
+                    </div>
+                  </TableCell>
+                  <TableCell colSpan={5} className="hidden md:table-cell text-sm text-gray-600">
                     <div className="flex flex-wrap gap-4">
                       <span>선수금: <span className="font-medium">{formatCurrency(paymentTotals.advance)}</span></span>
                       <span>중도금: <span className="font-medium">{formatCurrency(paymentTotals.midPayment)}</span></span>
@@ -293,15 +301,16 @@ export default async function ClientsPage({
                       <span>일시지급: <span className="font-medium">{formatCurrency(paymentTotals.fullPayment)}</span></span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right text-sm text-gray-600">합계별</TableCell>
-                  <TableCell></TableCell>
+                  <TableCell className="text-right text-xs sm:text-sm text-gray-600 whitespace-nowrap">합계별</TableCell>
+                  <TableCell className="hidden md:table-cell"></TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell colSpan={5} className="font-bold">총 합계</TableCell>
-                  <TableCell className="text-right font-bold">
+                  <TableCell colSpan={3} className="font-bold text-sm sm:text-base md:hidden">총 합계</TableCell>
+                  <TableCell colSpan={5} className="hidden md:table-cell font-bold">총 합계</TableCell>
+                  <TableCell className="text-right font-bold text-sm sm:text-base whitespace-nowrap">
                     {formatCurrency(grandTotal)}
                   </TableCell>
-                  <TableCell></TableCell>
+                  <TableCell className="hidden md:table-cell"></TableCell>
                 </TableRow>
               </TableFooter>
             </Table></div>

@@ -188,14 +188,17 @@ export default async function ProjectsPage({
   ].filter((v) => v && v !== "all").length;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">프로젝트</h1>
-          <p className="text-gray-500">프로젝트를 관리합니다.</p>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">프로젝트</h1>
+          <p className="text-sm md:text-base text-gray-500">프로젝트를 관리합니다.</p>
         </div>
-        <Link href="/projects/new">
-          <Button>
+        <Link href="/projects/new" className="shrink-0">
+          <Button size="sm" className="md:hidden">
+            <Plus className="h-4 w-4" />
+          </Button>
+          <Button className="hidden md:inline-flex">
             <Plus className="mr-2 h-4 w-4" />
             프로젝트 생성
           </Button>
@@ -249,19 +252,19 @@ export default async function ProjectsPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>프로젝트명</TableHead>
-                  <TableHead>거래처</TableHead>
-                  <TableHead>담당자</TableHead>
+                  <TableHead className="hidden md:table-cell">거래처</TableHead>
+                  <TableHead className="hidden lg:table-cell">담당자</TableHead>
                   <TableHead>상태</TableHead>
-                  <TableHead>진행률</TableHead>
+                  <TableHead className="hidden md:table-cell">진행률</TableHead>
                   <TableHead className="text-right">금액</TableHead>
-                  <TableHead className="text-center">마감일</TableHead>
+                  <TableHead className="hidden sm:table-cell text-center">마감일</TableHead>
                   <TableHead className="text-right">액션</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredProjects.map((project) => (
                   <TableRow key={project.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium max-w-[120px] md:max-w-none truncate">
                       <Link
                         href={`/projects/${project.id}`}
                         className="hover:underline"
@@ -269,7 +272,7 @@ export default async function ProjectsPage({
                         {project.name}
                       </Link>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <Link
                         href={`/clients/${project.client.id}`}
                         className="hover:underline"
@@ -277,24 +280,24 @@ export default async function ProjectsPage({
                         {project.client.name}
                       </Link>
                     </TableCell>
-                    <TableCell>{project.manager.name}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{project.manager.name}</TableCell>
                     <TableCell>
-                      <Badge className={statusLabels[project.status].color}>
+                      <Badge className={`${statusLabels[project.status].color} text-xs md:text-sm`}>
                         {statusLabels[project.status].label}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       <div className="flex items-center gap-2">
-                        <Progress value={project.progress} className="w-20" />
+                        <Progress value={project.progress} className="w-16 md:w-20" />
                         <span className="text-sm text-gray-500">
                           {project.progress}%
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium text-xs md:text-sm whitespace-nowrap">
                       {project.totalAmount > 0 ? formatCurrency(project.totalAmount) : "-"}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="hidden sm:table-cell text-center">
                       {project.deadline ? (
                         <span className={new Date(project.deadline) < new Date() ? "text-red-600 font-medium" : ""}>
                           {format(new Date(project.deadline), "yyyy.MM.dd", { locale: ko })}
@@ -305,9 +308,9 @@ export default async function ProjectsPage({
                     </TableCell>
                     <TableCell className="text-right">
                       <Link href={`/projects/${project.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="mr-1 h-4 w-4" />
-                          자세히 보기
+                        <Button variant="outline" size="sm" className="whitespace-nowrap">
+                          <Eye className="h-4 w-4 md:mr-1" />
+                          <span className="hidden md:inline">자세히 보기</span>
                         </Button>
                       </Link>
                     </TableCell>
@@ -316,23 +319,21 @@ export default async function ProjectsPage({
               </TableBody>
               <TableFooter>
                 <TableRow className="bg-gray-50">
-                  <TableCell colSpan={5} className="text-sm text-gray-600">
-                    <div className="flex flex-wrap gap-4">
+                  <TableCell colSpan={3} className="text-xs md:text-sm text-gray-600">
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 md:gap-4">
                       <span>선수금: <span className="font-medium">{formatCurrency(paymentTotals.advance)}</span></span>
                       <span>중도금: <span className="font-medium">{formatCurrency(paymentTotals.midPayment)}</span></span>
                       <span>잔금: <span className="font-medium">{formatCurrency(paymentTotals.balance)}</span></span>
                       <span>일시지급: <span className="font-medium">{formatCurrency(paymentTotals.fullPayment)}</span></span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right text-sm text-gray-600">합계별</TableCell>
-                  <TableCell colSpan={2}></TableCell>
+                  <TableCell className="text-right text-xs md:text-sm text-gray-600">합계별</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell colSpan={5} className="font-bold">총 합계</TableCell>
-                  <TableCell className="text-right font-bold">
+                  <TableCell colSpan={3} className="font-bold text-sm md:text-base">총 합계</TableCell>
+                  <TableCell className="text-right font-bold text-sm md:text-base whitespace-nowrap">
                     {formatCurrency(grandTotal)}
                   </TableCell>
-                  <TableCell colSpan={2}></TableCell>
                 </TableRow>
               </TableFooter>
             </Table></div>

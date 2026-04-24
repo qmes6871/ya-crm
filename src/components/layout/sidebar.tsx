@@ -156,6 +156,7 @@ export function Sidebar() {
   const { data: session } = useSession();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isDemo = session?.user?.email === "demo@yasolution.com";
 
   const permissions = session?.user?.permissions;
   const isAdmin = session?.user?.role === "ADMIN";
@@ -282,7 +283,7 @@ export function Sidebar() {
       {/* 모바일 햄버거 버튼 */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden p-2 rounded-md bg-white shadow-md border"
+        className={cn("fixed left-4 z-50 lg:hidden p-2 rounded-md bg-white shadow-md border", isDemo ? "top-[72px]" : "top-4")}
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -306,7 +307,7 @@ export function Sidebar() {
       </aside>
 
       {/* PC 사이드바 */}
-      <aside className="hidden lg:block fixed left-0 top-0 z-40 h-screen w-64 border-r bg-white">
+      <aside className={cn("hidden lg:block fixed left-0 z-40 w-64 border-r bg-white", isDemo ? "top-[56px] h-[calc(100vh-56px)]" : "top-0 h-screen")}>
         {navContent}
       </aside>
     </>

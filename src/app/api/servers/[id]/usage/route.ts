@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
+import { validateLocalPath } from "@/lib/path-validation";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 // 서버 타입별 스펙 (바이트 단위)
 const serverTypeSpecs: Record<string, { storage: number; traffic: number | null }> = {
@@ -46,41 +47,43 @@ export async function GET(
     let diskUsage = 0;
     let trafficUsage = 0;
 
-    // 디스크 사용량 확인
-    if (server.localPath) {
+    const safeLocalPath = server.localPath ? validateLocalPath(server.localPath) : null;
+
+    if (safeLocalPath) {
       try {
-        const { stdout } = await execAsync(`du -sb "${server.localPath}" 2>/dev/null | cut -f1`);
-        diskUsage = parseInt(stdout.trim()) || 0;
+        const { stdout } = await execFileAsync("du", ["-sb", safeLocalPath]);
+        diskUsage = parseInt(stdout.split(/\s+/)[0]) || 0;
       } catch {
-        // 폴더가 없거나 접근 불가
         diskUsage = 0;
       }
     }
 
-    // 트래픽 계산 (nginx 로그 기반, trafficResetAt 이후)
     const trafficResetAt = server.trafficResetAt;
-    if (server.localPath) {
+    if (safeLocalPath) {
       try {
-        // 폴더명 추출 (예: /var/www/crm -> crm)
-        const folderName = server.localPath.split("/").pop();
+        const folderName = safeLocalPath.split("/").pop();
 
         if (folderName) {
-          let cmd: string;
+          let awkScript: string;
 
           if (trafficResetAt) {
-            // 초기화 날짜가 있으면 그 이후의 로그만 계산
-            // 초기화 날짜를 Unix timestamp로 변환
             const resetTimestamp = Math.floor(new Date(trafficResetAt).getTime() / 1000);
-
-            // awk로 날짜 비교 후 트래픽 합산
-            cmd = `awk -v resetTs="${resetTimestamp}" 'BEGIN{split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",m," ");for(i=1;i<=12;i++)mon[m[i]]=i}/${folderName}\\//{match($4,/\\[([0-9]+)\\/([A-Za-z]+)\\/([0-9]+):([0-9]+):([0-9]+):([0-9]+)/,a);t=mktime(a[3]" "mon[a[2]]" "a[1]" "a[4]" "a[5]" "a[6]);if(t>=resetTs)sum+=$10}END{print sum+0}' /var/log/nginx/access.log 2>/dev/null`;
+            awkScript = `BEGIN{split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",m," ");for(i=1;i<=12;i++)mon[m[i]]=i}/${folderName}\\//{match($4,/\\[([0-9]+)\\/([A-Za-z]+)\\/([0-9]+):([0-9]+):([0-9]+):([0-9]+)/,a);t=mktime(a[3]" "mon[a[2]]" "a[1]" "a[4]" "a[5]" "a[6]);if(t>=resetTs)sum+=$10}END{print sum+0}`;
+            const { stdout } = await execFileAsync("awk", [
+              "-v",
+              `resetTs=${resetTimestamp}`,
+              awkScript,
+              "/var/log/nginx/access.log",
+            ]);
+            trafficUsage = parseInt(stdout.trim()) || 0;
           } else {
-            // 초기화 날짜가 없으면 전체 트래픽
-            cmd = `awk '/${folderName}\\// {sum += $10} END {print sum+0}' /var/log/nginx/access.log 2>/dev/null`;
+            awkScript = `/${folderName}\\// {sum += $10} END {print sum+0}`;
+            const { stdout } = await execFileAsync("awk", [
+              awkScript,
+              "/var/log/nginx/access.log",
+            ]);
+            trafficUsage = parseInt(stdout.trim()) || 0;
           }
-
-          const { stdout } = await execAsync(cmd);
-          trafficUsage = parseInt(stdout.trim()) || 0;
         }
       } catch {
         trafficUsage = 0;

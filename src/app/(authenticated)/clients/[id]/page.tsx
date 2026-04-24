@@ -87,7 +87,7 @@ export default async function ClientDetailPage({
           </Link>
           <DeleteButton
             id={client.id}
-            endpoint="/yacrm/api/clients"
+            endpoint="/api/clients"
             redirectPath="/clients"
             itemName={client.name}
           />

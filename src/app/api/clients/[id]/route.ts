@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isDemoUser } from "@/lib/demo";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -13,6 +14,10 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-client-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const client = await prisma.client.findUnique({
       where: { id },
@@ -55,6 +60,11 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-client-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const { name, contact, contractDate, firstDraftDate, requirements, requestTypes } = body;
 
@@ -119,6 +129,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-client-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     await prisma.client.delete({
       where: { id },

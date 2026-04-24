@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isDemoUser } from "@/lib/demo";
 
 export async function GET() {
   try {
@@ -9,7 +10,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const where = isDemoUser(session)
+      ? { id: { startsWith: "demo-client-" } }
+      : { NOT: { id: { startsWith: "demo-client-" } } };
+
     const clients = await prisma.client.findMany({
+      where,
       include: {
         requestTypes: true,
         payments: true,

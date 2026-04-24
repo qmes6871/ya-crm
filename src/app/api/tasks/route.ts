@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isDemoUser } from "@/lib/demo";
 
 export async function GET(request: Request) {
   try {
@@ -14,6 +15,12 @@ export async function GET(request: Request) {
     const projectId = searchParams.get("projectId");
 
     const where: Record<string, unknown> = {};
+
+    if (isDemoUser(session)) {
+      where.id = { startsWith: "demo-task-" };
+    } else {
+      where.NOT = { id: { startsWith: "demo-task-" } };
+    }
 
     if (personal) {
       where.assigneeId = session.user.id;

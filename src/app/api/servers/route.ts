@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { validateLocalPath } from "@/lib/path-validation";
 
 export async function GET() {
   try {
@@ -74,6 +75,13 @@ export async function POST(request: NextRequest) {
     if (!projectId || !name) {
       return NextResponse.json(
         { error: "프로젝트와 서버명은 필수입니다." },
+        { status: 400 }
+      );
+    }
+
+    if (localPath && !validateLocalPath(localPath)) {
+      return NextResponse.json(
+        { error: "localPath는 /var/www/<이름> 형식이어야 합니다." },
         { status: 400 }
       );
     }

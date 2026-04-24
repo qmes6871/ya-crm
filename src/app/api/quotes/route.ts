@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { isDemoUser } from "@/lib/demo";
 
 // 견적서 번호 생성 함수
 async function generateQuoteNumber(): Promise<string> {
@@ -35,6 +36,11 @@ export async function GET() {
     const session = await auth();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 데모 계정은 빈 목록 반환
+    if (isDemoUser(session)) {
+      return NextResponse.json([]);
     }
 
     const quotes = await prisma.quote.findMany({

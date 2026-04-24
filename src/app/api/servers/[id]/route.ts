@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { rm } from "fs/promises";
+import { validateLocalPath } from "@/lib/path-validation";
 
 export async function GET(
   request: Request,
@@ -59,6 +57,13 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+
+    if (body.localPath && !validateLocalPath(body.localPath)) {
+      return NextResponse.json(
+        { error: "localPath는 /var/www/<이름> 형식이어야 합니다." },
+        { status: 400 }
+      );
+    }
 
     const {
       projectId,
@@ -147,15 +152,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Server not found" }, { status: 404 });
     }
 
-    // 로컬 폴더가 있으면 삭제
-    if (server.localPath && server.localPath.startsWith("/var/www/")) {
+    if (server.localPath && validateLocalPath(server.localPath)) {
       try {
-        // 안전을 위해 /var/www/ 하위 폴더만 삭제 가능
-        await execAsync(`rm -rf "${server.localPath}"`);
+        await rm(server.localPath, { recursive: true, force: true });
         console.log(`Deleted folder: ${server.localPath}`);
       } catch (error) {
         console.error(`Failed to delete folder ${server.localPath}:`, error);
-        // 폴더 삭제 실패해도 DB 레코드는 삭제 진행
       }
     }
 

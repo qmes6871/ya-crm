@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { isDemoUser, DEMO_USER_ID } from "@/lib/demo";
 
 export async function GET() {
   try {
@@ -10,7 +11,13 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // 데모 계정은 자기 자신만 표시
+    const where = isDemoUser(session)
+      ? { id: DEMO_USER_ID }
+      : {};
+
     const users = await prisma.user.findMany({
+      where,
       select: {
         id: true,
         name: true,

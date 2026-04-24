@@ -19,6 +19,21 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  // Allow iframe embedding from yasolu.com
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'self' https://yasolu.com",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -74,10 +74,17 @@ export default function NewProjectPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [deadline, setDeadline] = useState("");
+  const [firstDraftDate, setFirstDraftDate] = useState("");
+  const [secondDraftDate, setSecondDraftDate] = useState("");
   const [serverCost, setServerCost] = useState("NONE");
   const [serverCostCustom, setServerCostCustom] = useState("");
   const [maintenance, setMaintenance] = useState("NONE");
   const [maintenanceCustom, setMaintenanceCustom] = useState("");
+  const [instructionPurpose, setInstructionPurpose] = useState("");
+  const [instructionFeatures, setInstructionFeatures] = useState("");
+  const [instructionDesign, setInstructionDesign] = useState("");
+  const [instructionPages, setInstructionPages] = useState("");
+  const [instructionNotes, setInstructionNotes] = useState("");
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -196,10 +203,17 @@ export default function NewProjectPage() {
           name,
           description,
           deadline,
+          firstDraftDate: firstDraftDate || null,
+          secondDraftDate: secondDraftDate || null,
           serverCost: serverCost !== "NONE" ? serverCost : null,
           serverCostCustom: serverCost === "OTHER" ? serverCostCustom : null,
           maintenance: maintenance !== "NONE" ? maintenance : null,
           maintenanceCustom: maintenance === "OTHER" ? maintenanceCustom : null,
+          instructionPurpose: instructionPurpose || null,
+          instructionFeatures: instructionFeatures || null,
+          instructionDesign: instructionDesign || null,
+          instructionPages: instructionPages || null,
+          instructionNotes: instructionNotes || null,
           payments: paymentsData,
         }),
       });
@@ -315,7 +329,25 @@ export default function NewProjectPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="deadline">마감일 *</Label>
+                <Label htmlFor="firstDraftDate">1차 시안 공유일</Label>
+                <Input
+                  id="firstDraftDate"
+                  type="date"
+                  value={firstDraftDate}
+                  onChange={(e) => setFirstDraftDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="secondDraftDate">2차 시안 공유일</Label>
+                <Input
+                  id="secondDraftDate"
+                  type="date"
+                  value={secondDraftDate}
+                  onChange={(e) => setSecondDraftDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="deadline">최종 마감일 *</Label>
                 <Input
                   id="deadline"
                   type="date"
@@ -448,6 +480,70 @@ export default function NewProjectPage() {
 
             <Card>
               <CardHeader>
+                <CardTitle>작업지시서</CardTitle>
+                <CardDescription>담당자가 개발에 참고할 상세 정보입니다. 모든 항목이 필수입니다.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="instructionPurpose">목적 / 배경 *</Label>
+                  <Textarea
+                    id="instructionPurpose"
+                    value={instructionPurpose}
+                    onChange={(e) => setInstructionPurpose(e.target.value)}
+                    placeholder="프로젝트의 목적, 배경, 타겟 사용자 등을 기술하세요."
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructionFeatures">주요 기능 *</Label>
+                  <Textarea
+                    id="instructionFeatures"
+                    value={instructionFeatures}
+                    onChange={(e) => setInstructionFeatures(e.target.value)}
+                    placeholder="구현해야 할 핵심 기능 목록을 기술하세요. (예: 회원가입, 게시판, 결제 등)"
+                    rows={4}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructionDesign">디자인 참고 *</Label>
+                  <Textarea
+                    id="instructionDesign"
+                    value={instructionDesign}
+                    onChange={(e) => setInstructionDesign(e.target.value)}
+                    placeholder="참고할 사이트, 톤앤매너, 컬러 가이드 등을 기술하세요."
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructionPages">페이지 구성 *</Label>
+                  <Textarea
+                    id="instructionPages"
+                    value={instructionPages}
+                    onChange={(e) => setInstructionPages(e.target.value)}
+                    placeholder="메뉴 / 사이트맵 / 주요 페이지 구조를 기술하세요."
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="instructionNotes">특이사항 *</Label>
+                  <Textarea
+                    id="instructionNotes"
+                    value={instructionNotes}
+                    onChange={(e) => setInstructionNotes(e.target.value)}
+                    placeholder="납품 형태, 제약사항, 주의점 등을 기술하세요."
+                    rows={3}
+                    required
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>매출</CardTitle>
                 <CardDescription>매출 유형별 금액을 입력하세요. (선택사항)</CardDescription>
               </CardHeader>
@@ -509,7 +605,20 @@ export default function NewProjectPage() {
               취소
             </Button>
           </Link>
-          <Button type="submit" disabled={isLoading || !clientId || !name || !deadline}>
+          <Button
+            type="submit"
+            disabled={
+              isLoading ||
+              !clientId ||
+              !name ||
+              !deadline ||
+              !instructionPurpose.trim() ||
+              !instructionFeatures.trim() ||
+              !instructionDesign.trim() ||
+              !instructionPages.trim() ||
+              !instructionNotes.trim()
+            }
+          >
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

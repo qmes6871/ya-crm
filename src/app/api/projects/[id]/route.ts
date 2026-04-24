@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isDemoUser } from "@/lib/demo";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -13,6 +14,10 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-proj-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -80,8 +85,60 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-proj-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await request.json();
-    const { name, description, status, progress, managerId, deadline, serverCost, serverCostCustom, maintenance, maintenanceCustom } = body;
+    const {
+      name,
+      description,
+      status,
+      progress,
+      managerId,
+      deadline,
+      firstDraftDate,
+      firstDraftCompletedAt,
+      secondDraftDate,
+      secondDraftCompletedAt,
+      serverCost,
+      serverCostCustom,
+      maintenance,
+      maintenanceCustom,
+      instructionPurpose,
+      instructionFeatures,
+      instructionDesign,
+      instructionPages,
+      instructionNotes,
+    } = body;
+
+    const toDateOrNull = (v: unknown) => {
+      if (v === null || v === "") return null;
+      if (v === undefined) return undefined;
+      return new Date(v as string);
+    };
+
+    // 작업지시서 필드 중 하나라도 업데이트 요청이 오면 5개 모두 non-empty 필수
+    const instructionFields = {
+      instructionPurpose,
+      instructionFeatures,
+      instructionDesign,
+      instructionPages,
+      instructionNotes,
+    };
+    const anyInstructionInBody = Object.values(instructionFields).some((v) => v !== undefined);
+    if (anyInstructionInBody) {
+      const missing = Object.entries(instructionFields)
+        .filter(([, v]) => !v || !String(v).trim())
+        .map(([k]) => k);
+      if (missing.length > 0) {
+        return NextResponse.json(
+          { error: "작업지시서의 모든 항목은 필수입니다.", missing },
+          { status: 400 }
+        );
+      }
+    }
 
     const project = await prisma.project.update({
       where: { id },
@@ -91,11 +148,20 @@ export async function PATCH(
         ...(status && { status }),
         ...(progress !== undefined && { progress }),
         ...(managerId && { managerId }),
-        ...(deadline && { deadline: new Date(deadline) }),
+        ...(deadline !== undefined && { deadline: toDateOrNull(deadline) }),
+        ...(firstDraftDate !== undefined && { firstDraftDate: toDateOrNull(firstDraftDate) }),
+        ...(firstDraftCompletedAt !== undefined && { firstDraftCompletedAt: toDateOrNull(firstDraftCompletedAt) }),
+        ...(secondDraftDate !== undefined && { secondDraftDate: toDateOrNull(secondDraftDate) }),
+        ...(secondDraftCompletedAt !== undefined && { secondDraftCompletedAt: toDateOrNull(secondDraftCompletedAt) }),
         ...(serverCost !== undefined && { serverCost }),
         ...(serverCostCustom !== undefined && { serverCostCustom }),
         ...(maintenance !== undefined && { maintenance }),
         ...(maintenanceCustom !== undefined && { maintenanceCustom }),
+        ...(instructionPurpose !== undefined && { instructionPurpose }),
+        ...(instructionFeatures !== undefined && { instructionFeatures }),
+        ...(instructionDesign !== undefined && { instructionDesign }),
+        ...(instructionPages !== undefined && { instructionPages }),
+        ...(instructionNotes !== undefined && { instructionNotes }),
       },
     });
 
@@ -120,6 +186,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-proj-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     await prisma.project.delete({
       where: { id },

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isDemoUser } from "@/lib/demo";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -13,6 +14,10 @@ export async function GET(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-lead-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     const lead = await prisma.lead.findUnique({
       where: { id },
@@ -50,6 +55,11 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-lead-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const {
       consultantId,
@@ -121,6 +131,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    if (isDemoUser(session) && !id.startsWith("demo-lead-")) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     await prisma.lead.delete({
       where: { id },
